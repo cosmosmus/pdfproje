@@ -75,6 +75,21 @@ model Visit {
   @@index([viewerSessionId])
 }
 
+enum ContactGroup {
+  APP_MEMBER
+  UNKNOWN_CUSTOMER
+  CURRENT_CUSTOMER
+  POTENTIAL_CUSTOMER
+}
+
+/// Email-level contact record — one row per unique email address across all documents.
+model Contact {
+  email     String       @id
+  group     ContactGroup @default(UNKNOWN_CUSTOMER)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
 model PageViewEvent {
   id              String        @id @default(uuid())
   viewerSessionId String

@@ -1,0 +1,12 @@
+-- CreateEnum
+CREATE TYPE "ContactGroup" AS ENUM ('APP_MEMBER', 'UNKNOWN_CUSTOMER', 'CURRENT_CUSTOMER', 'POTENTIAL_CUSTOMER');
+
+-- CreateTable
+CREATE TABLE "Contact" (
+    "email" TEXT NOT NULL,
+    "group" "ContactGroup" NOT NULL DEFAULT 'UNKNOWN_CUSTOMER',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Contact_pkey" PRIMARY KEY ("email")
+);

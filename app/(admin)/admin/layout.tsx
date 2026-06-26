@@ -31,6 +31,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </a>
         {email && (
           <div className="flex items-center gap-5 font-mono text-xs uppercase tracking-[0.12em]">
+            <a href="/admin/contacts" className="text-ink/50 hover:text-signal transition-colors">
+              Kişiler
+            </a>
+            <a href="/admin/mail" className="text-ink/50 hover:text-signal transition-colors">
+              Mail
+            </a>
             <a href="/admin/profile" className="text-ink/50 hover:text-signal transition-colors">
               Profil
             </a>
