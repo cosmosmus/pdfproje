@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model AdminUser {
+  id               String   @id @default(uuid())
+  email            String   @unique
+  passwordHash     String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  logoContentType  String?
+  logoStorageKey   String?
+  companyName      String?
+  contactEmail     String?
+  contactInstagram String?
+  contactLinkedin  String?
+  contactPhone     String?
+  contactWhatsapp  String?
+  websiteUrl       String?
+}
+
+model Document {
+  id               String          @id @default(uuid())
+  slug             String          @unique
+  title            String
+  originalFilename String
+  storageKey       String
+  pageCount        Int
+  fileSizeBytes    Int
+  isActive         Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  pageViewEvents   PageViewEvent[]
+  viewerSessions   ViewerSession[]
+  visits           Visit[]
+}
+
+model ViewerSession {
+  id             String          @id @default(uuid())
+  documentId     String
+  email          String
+  firstSeenAt    DateTime        @default(now())
+  lastSeenAt     DateTime        @default(now())
+  expiresAt      DateTime
+  pageViewEvents PageViewEvent[]
+  document       Document        @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  visits         Visit[]
+
+  @@unique([documentId, email])
+}
+
+/// One Visit = one page-load of the viewer (a browser tab opening the doc).
+/// Lets us answer "how many times did this person come back, from where, on what device"
+/// instead of just a flat pile of page-view events.
+model Visit {
+  id              String          @id
+  documentId      String
+  viewerSessionId String
+  ipAddress       String?
+  userAgent       String?
+  referrer        String?
+  country         String?
+  startedAt       DateTime        @default(now())
+  lastEventAt     DateTime        @default(now())
+  pageViewEvents  PageViewEvent[]
+  document        Document        @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  viewerSession   ViewerSession   @relation(fields: [viewerSessionId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([viewerSessionId])
+}
+
+model PageViewEvent {
+  id              String        @id @default(uuid())
+  viewerSessionId String
+  documentId      String
+  pageNumber      Int
+  durationMs      Int
+  country         String?
+  createdAt       DateTime      @default(now())
+  visitId         String
+  document        Document      @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  viewerSession   ViewerSession @relation(fields: [viewerSessionId], references: [id], onDelete: Cascade)
+  visit           Visit         @relation(fields: [visitId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, pageNumber])
+  @@index([viewerSessionId])
+  @@index([visitId])
+}
