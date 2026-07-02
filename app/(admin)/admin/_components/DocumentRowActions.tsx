@@ -43,7 +43,7 @@ export default function DocumentRowActions({
         onClick={handleToggle}
         disabled={toggling}
         title={active ? "Pasif yap (linki devre dışı bırakır)" : "Aktif et"}
-        className={`p-1.5 rounded transition-colors disabled:opacity-40 ${
+        className={`p-1.5 rounded-full transition-colors disabled:opacity-40 ${
           active
             ? "text-signal hover:bg-surface-muted hover:text-signal-dim"
             : "text-ink/30 hover:bg-surface-muted hover:text-signal"
@@ -67,7 +67,7 @@ export default function DocumentRowActions({
         onClick={handleDelete}
         disabled={deleting}
         title="Dökümanı sil"
-        className="p-1.5 rounded text-ink/30 hover:bg-danger/10 hover:text-danger transition-colors disabled:opacity-40"
+        className="p-1.5 rounded-full text-ink/30 hover:bg-danger/10 hover:text-danger transition-colors disabled:opacity-40"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <polyline points="3 6 5 6 21 6" />

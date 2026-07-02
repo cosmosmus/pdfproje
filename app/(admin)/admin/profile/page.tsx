@@ -14,31 +14,21 @@ export default async function AdminProfilePage() {
 
   return (
     <div className="max-w-5xl">
-      <Breadcrumbs items={[{ label: "Genel Bakış", href: "/admin" }, { label: "Profil" }]} />
-      <h1 className="font-display font-extrabold text-3xl mb-8">Profil & Marka</h1>
+      <Breadcrumbs items={[{ label: "Panel", href: "/admin" }, { label: "Profil" }]} />
+      <div className="bg-surface rounded-[28px] px-6 py-5 md:px-8 mb-4 md:mb-6">
+        <h1 className="font-display font-extrabold text-2xl tracking-tight">Profil & Marka</h1>
+        <p className="text-sm text-ink/45 mt-0.5">Hesap, logo ve iletişim bilgilerin.</p>
+      </div>
 
-      <div className="grid lg:grid-cols-2 gap-8 items-start">
+      <div className="grid lg:grid-cols-2 gap-4 md:gap-6 items-start">
         {/* Sol kolon: Logo + Hesap */}
-        <div className="space-y-6">
-          <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink/40 mb-3">Logo</p>
-            <LogoUploader hasLogo={Boolean(admin?.logoStorageKey)} />
-          </div>
-
-          <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink/40 mb-3">Hesap</p>
-            <ProfileForm currentEmail={email} />
-          </div>
+        <div className="space-y-4 md:space-y-6">
+          <LogoUploader hasLogo={Boolean(admin?.logoStorageKey)} />
+          <ProfileForm currentEmail={email} />
         </div>
 
         {/* Sağ kolon: İletişim Bilgileri */}
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink/40 mb-3">
-            İletişim Bilgileri
-          </p>
-          <p className="text-xs text-ink/40 mb-4">
-            404 sayfasında ve döküman görüntüleme ekranında görünür.
-          </p>
           <ContactForm
             initial={{
               companyName: admin?.companyName ?? "",

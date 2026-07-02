@@ -49,14 +49,15 @@ export default function ProfileForm({ currentEmail }: { currentEmail: string }) 
   }
 
   const inputClass =
-    "w-full bg-shell border border-rule rounded-lg px-4 py-2.5 placeholder:text-ink/30 focus:border-signal outline-none transition-colors";
-  const labelClass = "block font-mono text-[11px] uppercase tracking-[0.08em] text-ink/40 mb-1.5";
+    "w-full bg-shell border border-rule rounded-xl px-4 py-2.5 placeholder:text-ink/30 focus:border-signal outline-none transition-colors";
+  const labelClass = "block text-xs font-medium text-ink/50 mb-1.5";
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-surface border border-rule rounded-2xl p-6 space-y-5"
+      className="bg-surface rounded-[28px] p-6 md:p-8 space-y-5"
     >
+      <h2 className="font-display font-extrabold text-xl tracking-tight">Hesap</h2>
       <div>
         <label className={labelClass}>E-posta</label>
         <input
@@ -113,7 +114,7 @@ export default function ProfileForm({ currentEmail }: { currentEmail: string }) 
       <button
         type="submit"
         disabled={status === "saving"}
-        className="w-full flex items-center justify-center gap-2 bg-signal text-white font-bold rounded-lg px-3 py-3 hover:bg-signal-dim transition-colors disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-2 bg-ink text-surface font-semibold rounded-full px-3 py-3 hover:bg-ink-soft transition-colors disabled:opacity-50"
       >
         <IconCheck className="w-4 h-4" />
         {status === "saving" ? "Kaydediliyor..." : "Kaydet"}

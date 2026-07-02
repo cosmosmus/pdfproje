@@ -69,10 +69,10 @@ export default function ContactsTable({ rows: initialRows }: { rows: ContactRow[
   }
 
   return (
-    <div className="bg-surface border border-rule rounded-2xl overflow-hidden">
+    <div className="bg-surface rounded-[28px] p-6 md:p-8">
 
       {/* Filtre sekmeleri */}
-      <div className="flex overflow-x-auto border-b border-rule bg-surface-muted">
+      <div className="flex gap-1.5 overflow-x-auto pb-1 mb-5">
         {TABS.map((tab) => {
           const count =
             tab.key === "ALL"
@@ -86,15 +86,15 @@ export default function ContactsTable({ rows: initialRows }: { rows: ContactRow[
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key)}
-              className={`px-5 py-3.5 text-sm font-semibold whitespace-nowrap transition-colors border-b-2 flex items-center gap-2 ${
+              className={`rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition-colors flex items-center gap-2 ${
                 activeTab === tab.key
-                  ? "border-signal text-signal bg-surface"
-                  : "border-transparent text-ink/50 hover:text-ink"
+                  ? "bg-ink text-surface"
+                  : "text-ink/50 hover:bg-surface-muted hover:text-ink"
               }`}
             >
               {tab.label}
               <span
-                className={`text-xs font-medium ${activeTab === tab.key ? "text-signal/70" : "text-ink/35"}`}
+                className={`text-xs font-medium ${activeTab === tab.key ? "text-surface/60" : "text-ink/35"}`}
               >
                 {count}
               </span>
@@ -108,35 +108,27 @@ export default function ContactsTable({ rows: initialRows }: { rows: ContactRow[
         {visible.length === 0 ? (
           <p className="p-8 text-sm text-ink/40 text-center">Bu filtrede kimse yok.</p>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[560px] border-separate border-spacing-y-1.5">
             <thead>
-              <tr className="border-b border-rule bg-surface-muted">
-                <th className="text-left text-xs font-semibold text-ink/60 px-5 py-3.5 uppercase tracking-wide">
-                  E-posta
-                </th>
-                <th className="text-left text-xs font-semibold text-ink/60 px-5 py-3.5 uppercase tracking-wide">
-                  İlk Görülme
-                </th>
-                <th className="text-left text-xs font-semibold text-ink/60 px-5 py-3.5 uppercase tracking-wide">
-                  Grup
-                </th>
-                <th className="w-8 px-5 py-3.5" />
+              <tr className="text-left text-xs text-ink/40">
+                <th className="font-medium pb-2 pl-4">E-posta</th>
+                <th className="font-medium pb-2">İlk Görülme</th>
+                <th className="font-medium pb-2">Grup</th>
+                <th className="w-8 pb-2" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-rule">
+            <tbody>
               {visible.map((row) => {
                 const assigned = isAssigned(row.group);
+                const cell = `transition-colors px-4 py-3 ${
+                  assigned
+                    ? "bg-emerald-50/50 group-hover:bg-emerald-50/80"
+                    : "bg-red-50/50 group-hover:bg-red-50/80"
+                }`;
                 return (
-                  <tr
-                    key={row.email}
-                    className={`transition-colors ${
-                      assigned
-                        ? "bg-emerald-50/40 hover:bg-emerald-50/70"
-                        : "bg-red-50/40 hover:bg-red-50/70"
-                    }`}
-                  >
+                  <tr key={row.email} className="group">
                     {/* E-posta + renk göstergesi */}
-                    <td className="px-5 py-3">
+                    <td className={`${cell} rounded-l-2xl`}>
                       <div className="flex items-center gap-2.5">
                         <span
                           className={`w-2 h-2 rounded-full shrink-0 ${
@@ -148,7 +140,7 @@ export default function ContactsTable({ rows: initialRows }: { rows: ContactRow[
                     </td>
 
                     {/* Tarih */}
-                    <td className="px-5 py-3 text-ink/40 text-xs font-mono whitespace-nowrap">
+                    <td className={`${cell} text-ink/40 text-xs font-mono whitespace-nowrap`}>
                       {new Date(row.firstSeen).toLocaleDateString("tr-TR", {
                         day: "2-digit",
                         month: "short",
@@ -157,11 +149,11 @@ export default function ContactsTable({ rows: initialRows }: { rows: ContactRow[
                     </td>
 
                     {/* Grup dropdown */}
-                    <td className="px-5 py-3">
+                    <td className={cell}>
                       <select
                         value={row.group}
                         onChange={(e) => changeGroup(row.email, e.target.value as ContactGroup)}
-                        className={`text-[11px] font-mono rounded-lg px-2.5 py-1.5 border cursor-pointer outline-none transition-all appearance-none pr-6 ${
+                        className={`text-xs font-medium rounded-full px-3 py-1.5 border cursor-pointer outline-none transition-all appearance-none pr-6 ${
                           assigned
                             ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:border-emerald-300"
                             : "bg-red-50 border-red-200 text-red-600 hover:border-red-300"
@@ -179,7 +171,7 @@ export default function ContactsTable({ rows: initialRows }: { rows: ContactRow[
                     </td>
 
                     {/* Kayıt durumu */}
-                    <td className="px-5 py-3 text-right">
+                    <td className={`${cell} rounded-r-2xl text-right`}>
                       {saving.has(row.email) && (
                         <svg
                           className="w-3.5 h-3.5 animate-spin text-ink/30 inline"
@@ -201,7 +193,7 @@ export default function ContactsTable({ rows: initialRows }: { rows: ContactRow[
       </div>
 
       {/* Alt özet */}
-      <div className="px-5 py-3.5 border-t border-rule bg-surface-muted flex items-center gap-5">
+      <div className="pt-5 mt-2 border-t border-rule flex items-center gap-5">
         <span className="text-sm font-medium text-ink/50">
           <span className="font-bold text-ink">{rows.length}</span> kişi toplam
         </span>

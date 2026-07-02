@@ -27,7 +27,7 @@ export async function POST(
     return NextResponse.json({ error: "Döküman bulunamadı" }, { status: 404 });
   }
 
-  const link = `${request.nextUrl.origin}/d/${document.slug}`;
+  const link = `${request.nextUrl.origin}/doc/${document.slug}`;
 
   try {
     await sendDocumentLinkEmail({ to: parsed.data.email, documentTitle: document.title, link });

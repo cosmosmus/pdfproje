@@ -7,6 +7,13 @@ export function lookupCountry(ip: string | null): string | null {
   return result?.country ?? null;
 }
 
+/** Resolves a client IP to an estimated city name, or null if the database has none for that range. */
+export function lookupCity(ip: string | null): string | null {
+  if (!ip) return null;
+  const result = geoip.lookup(ip);
+  return result?.city || null;
+}
+
 /** Extracts the originating client IP from a Next.js Request, honoring x-forwarded-for. */
 export function getClientIp(headers: Headers): string | null {
   const forwardedFor = headers.get("x-forwarded-for");

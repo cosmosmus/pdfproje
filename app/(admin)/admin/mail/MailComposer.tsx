@@ -117,40 +117,42 @@ export default function MailComposer({
     <div className="grid lg:grid-cols-[360px_1fr] gap-6">
 
       {/* Sol: Alıcı listesi */}
-      <div className="bg-surface border border-rule rounded-2xl overflow-hidden self-start">
+      <div className="bg-surface rounded-[28px] overflow-hidden self-start">
 
         {/* Grup sekmeleri */}
-        <div className="flex overflow-x-auto border-b border-rule bg-surface-muted">
+        <div className="flex gap-1 overflow-x-auto p-4 pb-2">
           {TABS.map((tab) => (
             <button
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key)}
-              className={`px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.08em] whitespace-nowrap transition-colors border-b-2 ${
+              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
                 activeTab === tab.key
-                  ? "border-signal text-signal bg-surface"
-                  : "border-transparent text-ink/40 hover:text-ink"
+                  ? "bg-ink text-surface"
+                  : "text-ink/50 hover:bg-surface-muted hover:text-ink"
               }`}
             >
               {tab.label}
               {tab.key !== "ALL" && (
-                <span className="ml-1 text-ink/30">({countByGroup(tab.key as ContactGroup)})</span>
+                <span className={`ml-1 ${activeTab === tab.key ? "text-surface/60" : "text-ink/30"}`}>
+                  ({countByGroup(tab.key as ContactGroup)})
+                </span>
               )}
             </button>
           ))}
         </div>
 
         {/* Seç/kaldır */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-rule">
-          <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink/40">
+        <div className="flex items-center justify-between px-5 py-2.5 border-b border-rule">
+          <p className="text-xs font-medium text-ink/45">
             {selected.size} seçili / {emails.length} toplam
           </p>
           <button
             type="button"
             onClick={allVisibleSelected ? deselectVisible : selectVisible}
-            className="font-mono text-[10px] uppercase tracking-wide text-signal hover:text-signal-dim transition-colors"
+            className="text-xs font-semibold text-signal-dim hover:text-signal transition-colors"
           >
-            {allVisibleSelected ? "Görünenleri Kaldır" : "Görünenleri Seç"}
+            {allVisibleSelected ? "Görünenleri kaldır" : "Görünenleri seç"}
           </button>
         </div>
 
@@ -180,10 +182,10 @@ export default function MailComposer({
       </div>
 
       {/* Sağ: Compose */}
-      <div className="bg-surface border border-rule rounded-2xl p-6 flex flex-col gap-5">
+      <div className="bg-surface rounded-[28px] p-6 md:p-8 flex flex-col gap-5">
 
         <div>
-          <label className="block font-mono text-[11px] uppercase tracking-[0.08em] text-ink/50 mb-1.5">Konu</label>
+          <label className="block text-xs font-medium text-ink/50 mb-1.5">Konu</label>
           <input
             type="text"
             value={subject}
@@ -194,7 +196,7 @@ export default function MailComposer({
         </div>
 
         <div>
-          <label className="block font-mono text-[11px] uppercase tracking-[0.08em] text-ink/50 mb-1.5">Mesaj</label>
+          <label className="block text-xs font-medium text-ink/50 mb-1.5">Mesaj</label>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -206,8 +208,8 @@ export default function MailComposer({
 
         {/* Döküman linki */}
         <div>
-          <label className="block font-mono text-[11px] uppercase tracking-[0.08em] text-ink/50 mb-1.5">
-            Döküman Linki <span className="normal-case text-ink/30">(opsiyonel)</span>
+          <label className="block text-xs font-medium text-ink/50 mb-1.5">
+            Döküman linki <span className="text-ink/30">(opsiyonel)</span>
           </label>
           <select
             value={linkDocId}
@@ -228,16 +230,16 @@ export default function MailComposer({
 
         {/* Görsel */}
         <div>
-          <label className="block font-mono text-[11px] uppercase tracking-[0.08em] text-ink/50 mb-1.5">
-            Görsel <span className="normal-case text-ink/30">(opsiyonel)</span>
+          <label className="block text-xs font-medium text-ink/50 mb-1.5">
+            Görsel <span className="text-ink/30">(opsiyonel)</span>
           </label>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => imageRef.current?.click()}
-              className="font-mono text-xs uppercase tracking-wide border border-rule rounded-lg px-3 py-2 text-ink/60 hover:border-signal hover:text-signal hover:bg-surface-muted transition-colors"
+              className="text-sm font-medium border border-rule rounded-full px-4 py-2 text-ink/60 hover:border-ink/30 hover:text-ink transition-colors"
             >
-              Görsel Seç
+              Görsel seç
             </button>
             {imageFilename && (
               <div className="flex items-center gap-2">
@@ -263,7 +265,7 @@ export default function MailComposer({
             type="button"
             onClick={handleSend}
             disabled={sendStatus === "sending" || selected.size === 0}
-            className="bg-signal hover:bg-signal-dim text-white font-semibold text-sm rounded-xl px-6 py-3 transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="bg-ink hover:bg-ink-soft text-surface font-semibold text-sm rounded-full px-6 py-3 transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {sendStatus === "sending" ? (
               <>

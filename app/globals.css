@@ -102,6 +102,26 @@ body {
   }
 }
 
+/* Sidebar: faint dot-grid texture, fading toward the bottom so it never competes with content.
+   Drawn on a pseudo-element so the mask never touches the actual menu content. */
+.dot-pattern {
+  position: relative;
+  isolation: isolate;
+}
+.dot-pattern::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(32, 35, 43, 0.09) 1px, transparent 1.5px);
+  background-size: 20px 20px;
+  background-position: 10px 10px;
+  mask-image: linear-gradient(to bottom, black 0%, rgba(0, 0, 0, 0.35) 55%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, rgba(0, 0, 0, 0.35) 55%, transparent 100%);
+}
+
 /* Hover lift: the small "this is interactive" gesture for cards, rows, and panels */
 .hover-lift {
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;

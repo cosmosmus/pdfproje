@@ -43,12 +43,18 @@ export default function ContactForm({ initial }: { initial: ContactData }) {
   }
 
   const inputClass =
-    "w-full bg-shell border border-rule rounded-lg px-3.5 py-2.5 text-sm placeholder:text-ink/30 focus:border-signal outline-none transition-colors";
+    "w-full bg-shell border border-rule rounded-xl px-3.5 py-2.5 text-sm placeholder:text-ink/30 focus:border-signal outline-none transition-colors";
   const labelClass =
-    "block font-mono text-[10px] uppercase tracking-[0.1em] text-ink/40 mb-1.5";
+    "block text-xs font-medium text-ink/50 mb-1.5";
 
   return (
-    <form onSubmit={handleSubmit} className="bg-surface border border-rule rounded-2xl p-6 space-y-4">
+    <form onSubmit={handleSubmit} className="bg-surface rounded-[28px] p-6 md:p-8 space-y-4">
+      <div>
+        <h2 className="font-display font-extrabold text-xl tracking-tight">İletişim Bilgileri</h2>
+        <p className="text-xs text-ink/40 mt-1">
+          404 sayfasında ve döküman görüntüleme ekranında görünür.
+        </p>
+      </div>
 
       {/* Firma adı — tam genişlik */}
       <div>
@@ -137,7 +143,7 @@ export default function ContactForm({ initial }: { initial: ContactData }) {
       <button
         type="submit"
         disabled={status === "saving"}
-        className="w-full flex items-center justify-center gap-2 bg-signal text-white font-bold rounded-lg px-3 py-2.5 text-sm hover:bg-signal-dim transition-colors disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-2 bg-ink text-surface font-semibold rounded-full px-3 py-2.5 text-sm hover:bg-ink-soft transition-colors disabled:opacity-50"
       >
         <IconCheck className="w-4 h-4" />
         {status === "saving" ? "Kaydediliyor..." : "Kaydet"}

@@ -58,23 +58,33 @@ export default function LinkRowActions({
 
   return (
     <div className="relative inline-flex items-center gap-1">
-      <button
-        type="button"
-        onClick={handleCopy}
-        title="Linki kopyala"
-        className="p-1.5 rounded hover:bg-surface-muted text-ink/40 hover:text-signal transition-colors"
-      >
-        {copied ? (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ) : (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" />
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-          </svg>
-        )}
-      </button>
+      <span className="relative group">
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="p-1.5 rounded-full hover:bg-surface-muted text-ink/40 hover:text-signal transition-colors"
+        >
+          {copied ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          )}
+        </button>
+        <span className="hidden group-hover:block absolute left-0 top-full pt-1 z-10">
+          <a
+            href={link}
+            target="_blank"
+            className="block bg-surface border border-rule rounded-lg shadow-xl shadow-black/10 px-3 py-1.5 font-mono text-xs text-signal hover:text-signal-dim whitespace-nowrap"
+          >
+            {link}
+          </a>
+        </span>
+      </span>
 
       <button
         type="button"
@@ -83,7 +93,7 @@ export default function LinkRowActions({
           setShowWhatsappForm(false);
         }}
         title="Mail ile gönder"
-        className="p-1.5 rounded hover:bg-surface-muted text-ink/40 hover:text-signal transition-colors"
+        className="p-1.5 rounded-full hover:bg-surface-muted text-ink/40 hover:text-signal transition-colors"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <rect x="2" y="4" width="20" height="16" rx="2" />
@@ -98,7 +108,7 @@ export default function LinkRowActions({
           setShowMailForm(false);
         }}
         title="WhatsApp ile gönder"
-        className="p-1.5 rounded hover:bg-surface-muted text-signal"
+        className="p-1.5 rounded-full hover:bg-surface-muted text-signal"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <path d="M17.5 14.4c-.3-.1-1.6-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.2-.6.9-.8 1-.1.2-.3.2-.6.1-.7-.3-1.5-.8-2.1-1.4-.6-.6-1.1-1.3-1.5-2-.1-.3 0-.5.1-.6l.5-.6c.1-.2.1-.4 0-.6-.1-.2-.6-1.4-.8-1.9-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.7.7-1 1.5-1 2.5.1 1.1.6 2.2 1.4 3.2 1.6 2 3.5 3.4 5.8 4.1 1.1.4 2 .2 2.7-.1.6-.3 1.1-.9 1.3-1.6.1-.3.1-.6 0-.7-.1-.1-.3-.2-.5-.3z" />

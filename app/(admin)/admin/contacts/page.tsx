@@ -31,11 +31,10 @@ export default async function ContactsPage() {
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/40 mb-1">Yönetim</p>
-        <h1 className="font-display font-extrabold text-3xl">Kişiler</h1>
-        <p className="text-sm text-ink/50 mt-1">
+    <div className="flex flex-col gap-4 md:gap-6">
+      <div className="bg-surface rounded-[28px] px-6 py-5 md:px-8">
+        <h1 className="font-display font-extrabold text-2xl tracking-tight">Kişiler</h1>
+        <p className="text-sm text-ink/45 mt-0.5">
           Dökümanlarını görüntüleyen kişilere grup ata.
         </p>
       </div>

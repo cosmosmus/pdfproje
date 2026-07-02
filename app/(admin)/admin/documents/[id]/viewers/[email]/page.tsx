@@ -7,6 +7,7 @@ import Breadcrumbs from "../../../../_components/Breadcrumbs";
 import SectionHeading from "../../../../_components/SectionHeading";
 import ViewerPageChart from "./ViewerPageChart";
 import { formatDuration } from "@/lib/format-duration";
+import { lookupCity } from "@/lib/geo";
 
 const WINDOWS_DAYS = [7, 30, 90] as const;
 
@@ -62,95 +63,102 @@ export default async function ViewerHistoryPage({
   }
   const countryData = Array.from(countryCounts.entries()).map(([code, count]) => ({ code, count }));
 
-  return (
-    <div>
-      <Breadcrumbs
-        items={[
-          { label: "Genel Bakış", href: "/admin" },
-          { label: document.title, href: `/admin/documents/${id}` },
-          { label: email },
-        ]}
-      />
-      <h1 className="font-display font-extrabold text-3xl mb-1">{email}</h1>
-      <p className="font-mono text-xs text-ink/60 mb-10">
-        İlk görüntüleme:{" "}
-        <span className="font-semibold text-ink">
-          {viewerSession.firstSeenAt.toLocaleString("tr-TR")}
-        </span>{" "}
-        · Son görüntüleme:{" "}
-        <span className="font-semibold text-ink">
-          {viewerSession.lastSeenAt.toLocaleString("tr-TR")}
-        </span>{" "}
-        · Toplam ziyaret:{" "}
-        <span className="font-bold text-signal">{visits.length}</span>
-      </p>
+  const cell = "bg-shell/60 group-hover:bg-surface-muted transition-colors p-4";
 
-      <SectionHeading>Zaman Aralığına Göre Toplam İzlenme</SectionHeading>
-      <div className="flex gap-4 mb-10">
+  return (
+    <div className="flex flex-col gap-4 md:gap-6">
+      <div className="bg-surface rounded-[28px] px-6 py-5 md:px-8">
+        <Breadcrumbs
+          items={[
+            { label: "Panel", href: "/admin" },
+            { label: document.title, href: `/admin/documents/${id}` },
+            { label: email },
+          ]}
+        />
+        <h1 className="font-display font-extrabold text-2xl tracking-tight mb-1">{email}</h1>
+        <p className="text-xs text-ink/45">
+          İlk görüntüleme:{" "}
+          <span className="font-semibold text-ink">
+            {viewerSession.firstSeenAt.toLocaleString("tr-TR")}
+          </span>{" "}
+          · Son görüntüleme:{" "}
+          <span className="font-semibold text-ink">
+            {viewerSession.lastSeenAt.toLocaleString("tr-TR")}
+          </span>{" "}
+          · Toplam ziyaret:{" "}
+          <span className="font-bold text-signal-dim">{visits.length}</span>
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
         {windowTotalsMs.map(({ days, totalMs }) => (
-          <div key={days} className="hover-lift bg-surface border border-rule rounded-2xl p-5 flex-1">
-            <p className="font-display font-extrabold text-3xl">{formatDuration(totalMs / 1000)}</p>
-            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink/40">
-              Son {days} gün
-            </p>
+          <div key={days} className="hover-lift rounded-[24px] bg-surface px-4 pt-6 pb-5 flex flex-col items-center text-center gap-1.5">
+            <p className="font-display font-extrabold text-2xl leading-none">{formatDuration(totalMs / 1000)}</p>
+            <p className="text-xs text-ink/45">Son {days} gün</p>
           </div>
         ))}
       </div>
 
-      <SectionHeading>Sayfa Bazında İzlenme Süresi</SectionHeading>
-      <div className="hover-lift bg-surface border border-rule rounded-2xl p-5 mb-10">
+      <section className="hover-lift bg-surface rounded-[28px] p-6 md:p-8">
+        <SectionHeading>Sayfa Bazında İzlenme Süresi</SectionHeading>
         <ViewerPageChart documentSlug={document.slug} pageCount={document.pageCount} data={pageTotals} />
-        <p className="text-xs text-ink/30 mt-2">
+        <p className="text-xs text-ink/40 mt-3">
           Bir sütunun üzerine gelince o sayfanın görseli ve toplam saniyesi görünür.
         </p>
-      </div>
+      </section>
 
-      <SectionHeading>Konum</SectionHeading>
-      <div className="hover-lift bg-surface border border-rule rounded-2xl p-5 mb-10">
+      <section className="hover-lift bg-surface rounded-[28px] p-6 md:p-8">
+        <SectionHeading>Konum</SectionHeading>
         <CountryMapLoader countries={countryData} />
-      </div>
+      </section>
 
-      <SectionHeading>Ziyaret Geçmişi</SectionHeading>
-      <div className="bg-surface border border-rule rounded-2xl overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="text-left font-mono text-[11px] uppercase tracking-[0.08em] text-ink/40 border-b border-rule bg-surface-muted">
-            <tr>
-              <th className="p-4">Tarih</th>
-              <th className="p-4">Süre</th>
-              <th className="p-4">Ülke</th>
-              <th className="p-4">Cihaz</th>
-              <th className="p-4">IP</th>
-              <th className="p-4">Geldiği Yer</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visits.map((visit) => {
-              const visitMs = visit.pageViewEvents.reduce((sum, e) => sum + e.durationMs, 0);
-              return (
-                <tr key={visit.id} className="border-t border-rule transition-colors hover:bg-surface-muted">
-                  <td className="p-4 font-mono text-xs text-ink/50">
-                    {visit.startedAt.toLocaleString("tr-TR")}
-                  </td>
-                  <td className="p-4 font-mono text-ember">{formatDuration(visitMs / 1000)}</td>
-                  <td className="p-4">{visit.country ?? "—"}</td>
-                  <td className="p-4 text-ink/50 text-xs">{describeUserAgent(visit.userAgent)}</td>
-                  <td className="p-4 font-mono text-xs text-ink/40">{visit.ipAddress ?? "—"}</td>
-                  <td className="p-4 truncate max-w-[160px] text-ink/40 text-xs">
-                    {visit.referrer || "—"}
+      <section className="bg-surface rounded-[28px] p-6 md:p-8">
+        <SectionHeading>Ziyaret Geçmişi</SectionHeading>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[720px] border-separate border-spacing-y-1.5">
+            <thead>
+              <tr className="text-left text-xs text-ink/40">
+                <th className="font-medium pb-2 pl-4">Tarih</th>
+                <th className="font-medium pb-2">Süre</th>
+                <th className="font-medium pb-2">Ülke</th>
+                <th className="font-medium pb-2">Cihaz</th>
+                <th className="font-medium pb-2">IP</th>
+                <th className="font-medium pb-2">Geldiği Yer</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visits.map((visit) => {
+                const visitMs = visit.pageViewEvents.reduce((sum, e) => sum + e.durationMs, 0);
+                const city = lookupCity(visit.ipAddress);
+                return (
+                  <tr key={visit.id} className="group">
+                    <td className={`${cell} rounded-l-2xl font-mono text-xs text-ink/50 whitespace-nowrap`}>
+                      {visit.startedAt.toLocaleString("tr-TR")}
+                    </td>
+                    <td className={`${cell} font-mono text-xs text-ember`}>{formatDuration(visitMs / 1000)}</td>
+                    <td className={`${cell} whitespace-nowrap`} title={city ? "IP tabanlı tahmini konum" : undefined}>
+                      {visit.country ?? "—"}
+                      {city && <span className="text-ink/40 text-xs"> · {city}</span>}
+                    </td>
+                    <td className={`${cell} text-ink/50 text-xs`}>{describeUserAgent(visit.userAgent)}</td>
+                    <td className={`${cell} font-mono text-xs text-ink/40`}>{visit.ipAddress ?? "—"}</td>
+                    <td className={`${cell} rounded-r-2xl truncate max-w-[160px] text-ink/40 text-xs`}>
+                      {visit.referrer || "—"}
+                    </td>
+                  </tr>
+                );
+              })}
+              {visits.length === 0 && (
+                <tr>
+                  <td className="p-4 text-ink/40" colSpan={6}>
+                    Henüz ziyaret yok.
                   </td>
                 </tr>
-              );
-            })}
-            {visits.length === 0 && (
-              <tr>
-                <td className="p-4 text-ink/40" colSpan={6}>
-                  Henüz ziyaret yok.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

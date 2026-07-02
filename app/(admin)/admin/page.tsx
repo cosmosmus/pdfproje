@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
+import { lookupCity } from "@/lib/geo";
 import StatsCards from "./_components/StatsCards";
 import TopDocumentsChart from "./_components/TopDocumentsChart";
 import MonthlyChart from "./_components/MonthlyChart";
@@ -91,134 +92,126 @@ export default async function AdminDashboardPage() {
     startedAt: v.startedAt,
     email: v.viewerSession.email,
     country: v.country,
+    city: lookupCity(v.ipAddress),
     userAgent: v.userAgent,
     durationMs: v.pageViewEvents.reduce((sum, e) => sum + e.durationMs, 0),
     documentTitle: v.document.title,
     documentId: v.document.id,
   }));
 
+  const cell = "bg-shell/60 group-hover:bg-surface-muted transition-colors p-4";
+
   return (
-    <div>
-      <div className="flex items-end justify-between mb-8">
+    <div className="flex flex-col gap-4 md:gap-6">
+      <div className="bg-surface rounded-[28px] px-6 py-5 md:px-8 flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/40 mb-1">
-            Genel Bakış
-          </p>
-          <h1 className="font-display font-extrabold text-3xl">Vitrin&apos;deki her şey</h1>
+          <h1 className="font-display font-extrabold text-2xl tracking-tight">Panel</h1>
+          <p className="text-sm text-ink/45 mt-0.5">Vitrin&apos;deki her şey, tek bakışta.</p>
         </div>
         <Link
           href="/admin/documents/new"
-          className="flex items-center gap-2 bg-signal text-white font-bold rounded-lg px-4 py-2.5 text-sm hover:bg-signal-dim transition-colors whitespace-nowrap"
+          className="flex items-center gap-2 rounded-full bg-ink text-surface font-semibold px-5 py-2.5 text-sm hover:bg-ink-soft transition-colors whitespace-nowrap"
         >
           <IconUpload className="w-4 h-4" />
           Yeni PDF Yükle
         </Link>
       </div>
 
-      <SectionHeading>Dökümanlar</SectionHeading>
-      {documents.length === 0 ? (
-        <p className="text-ink/50 mb-10">Henüz döküman yok.</p>
-      ) : (
-        <div className="bg-surface border border-rule rounded-2xl overflow-hidden mb-10">
-          <table className="w-full text-sm">
-            <thead className="text-left font-mono text-[11px] uppercase tracking-[0.08em] text-ink/40 border-b border-rule bg-surface-muted">
-              <tr>
-                <th className="p-4">Başlık</th>
-                <th className="p-4 whitespace-nowrap">Sayfa</th>
-                <th className="p-4 whitespace-nowrap">Görüntüleyen</th>
-                <th className="p-4 whitespace-nowrap">Güncelleme</th>
-                <th className="p-4">Link</th>
-                <th className="p-4">İstatistik</th>
-                <th className="p-4">İşlem</th>
-              </tr>
-            </thead>
-            <tbody>
-              {documents.map((doc) => (
-                <tr key={doc.id} className={`border-t border-rule transition-colors hover:bg-surface-muted ${!doc.isActive ? "opacity-50" : ""}`}>
-                  <td className="p-4 font-medium">
-                    <div className="flex items-center gap-2.5">
-                      <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-ember/10 shrink-0">
-                        <IconPdfFile className="w-5 h-5 text-ember-dim" />
-                      </span>
-                      {doc.title}
-                      {!doc.isActive && (
-                        <span className="font-mono text-[10px] uppercase tracking-wider text-ink/40 bg-surface-muted border border-rule rounded px-1.5 py-0.5">
-                          pasif
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="p-4 text-ink/60 font-mono whitespace-nowrap">{doc.pageCount}</td>
-                  <td className="p-4 text-ink/60 font-mono whitespace-nowrap">{doc._count.viewerSessions}</td>
-                  <td className="p-4 text-ink/40 font-mono text-xs whitespace-nowrap">
-                    {doc.updatedAt.toLocaleDateString("tr-TR")}
-                  </td>
-                  <td className="p-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <ReplacePdfButton documentId={doc.id} />
-                      <a
-                        href={`/d/${doc.slug}`}
-                        target="_blank"
-                        className="font-mono text-xs text-signal hover:text-signal-dim transition-colors"
-                      >
-                        /d/{doc.slug}
-                      </a>
-                      <LinkRowActions documentId={doc.id} link={`${proto}://${host}/d/${doc.slug}`} />
-                    </div>
-                  </td>
-                  <td className="p-4 whitespace-nowrap">
-                    <Link
-                      href={`/admin/documents/${doc.id}`}
-                      className="text-ember hover:text-ember-dim transition-colors text-xs font-medium uppercase tracking-wide"
-                    >
-                      İstatistikler →
-                    </Link>
-                  </td>
-                  <td className="p-4 whitespace-nowrap">
-                    <DocumentRowActions documentId={doc.id} isActive={doc.isActive} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {documents.length === 0 ? null : (
+        <StatsCards
+          totalVisits={totalVisits}
+          uniqueViewers={uniqueViewers}
+          avgVisitSeconds={avgVisitSeconds}
+          totalSeconds={Math.round(totalEngagementMs / 1000)}
+        />
       )}
+
+      <section className="bg-surface rounded-[28px] p-6 md:p-8">
+        <SectionHeading>Dökümanlar</SectionHeading>
+        {documents.length === 0 ? (
+          <p className="text-ink/50">Henüz döküman yok. Yukarıdan ilk PDF&apos;ini yükleyebilirsin.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[760px] border-separate border-spacing-y-1.5">
+              <thead>
+                <tr className="text-left text-xs text-ink/40">
+                  <th className="font-medium pb-2 pl-4">Başlık</th>
+                  <th className="font-medium pb-2 whitespace-nowrap">Sayfa</th>
+                  <th className="font-medium pb-2 whitespace-nowrap">Görüntüleyen</th>
+                  <th className="font-medium pb-2 whitespace-nowrap">Güncelleme</th>
+                  <th className="font-medium pb-2">Link</th>
+                  <th className="font-medium pb-2">İstatistik</th>
+                  <th className="font-medium pb-2">İşlem</th>
+                </tr>
+              </thead>
+              <tbody>
+                {documents.map((doc) => (
+                  <tr key={doc.id} className={`group ${!doc.isActive ? "opacity-50" : ""}`}>
+                    <td className={`${cell} rounded-l-2xl font-semibold`}>
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-ember/10 shrink-0">
+                          <IconPdfFile className="w-4.5 h-4.5 text-ember-dim" />
+                        </span>
+                        {doc.title}
+                        {!doc.isActive && (
+                          <span className="rounded-full bg-surface-muted text-ink/45 text-xs font-semibold px-3 py-1">
+                            Pasif
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className={`${cell} text-ink/60 font-mono text-xs whitespace-nowrap`}>{doc.pageCount}</td>
+                    <td className={`${cell} text-ink/60 font-mono text-xs whitespace-nowrap`}>{doc._count.viewerSessions}</td>
+                    <td className={`${cell} text-ink/50 font-mono text-xs whitespace-nowrap`}>
+                      {doc.updatedAt.toLocaleDateString("tr-TR")}
+                    </td>
+                    <td className={`${cell} whitespace-nowrap`}>
+                      <div className="flex items-center gap-2">
+                        <ReplacePdfButton documentId={doc.id} />
+                        <LinkRowActions documentId={doc.id} link={`${proto}://${host}/doc/${doc.slug}`} />
+                      </div>
+                    </td>
+                    <td className={`${cell} whitespace-nowrap`}>
+                      <Link
+                        href={`/admin/documents/${doc.id}`}
+                        className="text-ember hover:text-ember-dim transition-colors text-xs font-semibold"
+                      >
+                        İstatistikler →
+                      </Link>
+                    </td>
+                    <td className={`${cell} rounded-r-2xl whitespace-nowrap`}>
+                      <DocumentRowActions documentId={doc.id} isActive={doc.isActive} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       {documents.length === 0 ? null : (
         <>
-          <div className="mb-10">
-            <StatsCards
-              totalVisits={totalVisits}
-              uniqueViewers={uniqueViewers}
-              avgVisitSeconds={avgVisitSeconds}
-              totalSeconds={Math.round(totalEngagementMs / 1000)}
-            />
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-6 mb-10">
-            <div>
+          <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
+            <section className="hover-lift bg-surface rounded-[28px] p-6 md:p-8">
               <SectionHeading>En Çok İlgi Gören Dökümanlar</SectionHeading>
-              <div className="hover-lift bg-surface border border-rule rounded-2xl p-5">
-                <TopDocumentsChart data={topDocumentsData} />
-              </div>
-            </div>
-            <div>
+              <TopDocumentsChart data={topDocumentsData} />
+            </section>
+            <section className="hover-lift bg-surface rounded-[28px] p-6 md:p-8">
               <SectionHeading>Aylık İzlenme Trendi</SectionHeading>
-              <div className="hover-lift bg-surface border border-rule rounded-2xl p-5">
-                <MonthlyChart data={monthlyData} />
-              </div>
-            </div>
+              <MonthlyChart data={monthlyData} />
+            </section>
           </div>
 
-          <SectionHeading>Görüntüleyenlerin Konumu</SectionHeading>
-          <div className="hover-lift bg-surface border border-rule rounded-2xl p-5 mb-10">
+          <section className="hover-lift bg-surface rounded-[28px] p-6 md:p-8">
+            <SectionHeading>Görüntüleyenlerin Konumu</SectionHeading>
             <CountryMapLoader countries={countryData} />
-          </div>
+          </section>
 
-          <SectionHeading>Son Ziyaretler</SectionHeading>
-          <div className="mb-10">
-            <RecentVisitsTable visits={recentVisits} />
-          </div>
+          <section className="bg-surface rounded-[28px] p-6 md:p-8">
+            <SectionHeading>Son Ziyaretler</SectionHeading>
+            <RecentVisitsTable visits={recentVisits} bare />
+          </section>
         </>
       )}
     </div>

@@ -20,20 +20,32 @@ export default function StatsCards({
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
       {cards.map((c) => (
         <div
           key={c.label}
-          className="hover-lift bg-surface border border-rule rounded-2xl p-5 relative overflow-hidden cursor-default"
+          className={
+            c.live
+              ? "rounded-[24px] bg-ink text-surface px-4 pt-6 pb-5 flex flex-col items-center text-center gap-3"
+              : "hover-lift rounded-[24px] bg-surface px-4 pt-6 pb-5 flex flex-col items-center text-center gap-3 cursor-default"
+          }
         >
-          <div className="flex items-center justify-between mb-2">
-            <c.Icon className="w-5 h-5 text-signal" />
-            {c.live && <span className="pulse-dot" title="Canlı" />}
+          <span
+            className={
+              c.live
+                ? "relative flex items-center justify-center w-11 h-11 rounded-full bg-surface text-ink"
+                : "flex items-center justify-center w-11 h-11 rounded-full bg-surface-muted text-ink/70"
+            }
+          >
+            <c.Icon className="w-5 h-5" />
+            {c.live && <span className="pulse-dot absolute -top-0.5 -right-0.5" title="Canlı" />}
+          </span>
+          <div>
+            <p className="font-display font-extrabold text-2xl leading-none">{c.value}</p>
+            <p className={c.live ? "text-xs mt-1.5 text-surface/60" : "text-xs mt-1.5 text-ink/45"}>
+              {c.label}
+            </p>
           </div>
-          <p className="font-display font-bold text-3xl mb-1">{c.value}</p>
-          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink/40">
-            {c.label}
-          </p>
         </div>
       ))}
     </div>

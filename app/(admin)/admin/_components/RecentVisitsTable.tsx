@@ -7,43 +7,43 @@ type VisitRow = {
   startedAt: Date;
   email: string;
   country: string | null;
+  city?: string | null;
   userAgent: string | null;
   durationMs: number;
   documentTitle?: string;
   documentId?: string;
 };
 
-export default function RecentVisitsTable({ visits }: { visits: VisitRow[] }) {
+const cell = "bg-shell/60 group-hover:bg-surface-muted transition-colors p-4";
+
+export default function RecentVisitsTable({ visits, bare = false }: { visits: VisitRow[]; bare?: boolean }) {
   const showDocument = visits.some((v) => v.documentTitle);
 
   return (
-    <div className="bg-surface border border-rule rounded-2xl overflow-hidden">
-      <table className="w-full text-sm">
-        <thead className="text-left font-mono text-[11px] uppercase tracking-[0.08em] text-ink/40 border-b border-rule bg-surface-muted">
-          <tr>
-            <th className="p-4">Tarih</th>
-            {showDocument && <th className="p-4">Döküman</th>}
-            <th className="p-4">E-posta</th>
-            <th className="p-4">Süre</th>
-            <th className="p-4">Ülke</th>
-            <th className="p-4">Cihaz</th>
+    <div className={bare ? "overflow-x-auto" : "bg-surface rounded-[28px] p-6 overflow-x-auto"}>
+      <table className="w-full text-sm min-w-[640px] border-separate border-spacing-y-1.5">
+        <thead>
+          <tr className="text-left text-xs text-ink/40">
+            <th className="font-medium pb-2 pl-4">Tarih</th>
+            {showDocument && <th className="font-medium pb-2">Döküman</th>}
+            <th className="font-medium pb-2">E-posta</th>
+            <th className="font-medium pb-2">Süre</th>
+            <th className="font-medium pb-2">Ülke</th>
+            <th className="font-medium pb-2">Cihaz</th>
           </tr>
         </thead>
         <tbody>
           {visits.map((v) => (
-            <tr
-              key={v.id}
-              className="border-t border-rule transition-colors hover:bg-surface-muted"
-            >
-              <td className="p-4 font-mono text-xs text-ink/50">
+            <tr key={v.id} className="group">
+              <td className={`${cell} rounded-l-2xl font-mono text-xs text-ink/50 whitespace-nowrap`}>
                 {v.startedAt.toLocaleString("tr-TR")}
               </td>
               {showDocument && (
-                <td className="p-4">
+                <td className={cell}>
                   {v.documentId ? (
                     <Link
                       href={`/admin/documents/${v.documentId}`}
-                      className="text-signal hover:text-signal-dim transition-colors"
+                      className="font-semibold text-ink hover:text-signal transition-colors"
                     >
                       {v.documentTitle}
                     </Link>
@@ -52,10 +52,13 @@ export default function RecentVisitsTable({ visits }: { visits: VisitRow[] }) {
                   )}
                 </td>
               )}
-              <td className="p-4">{v.email}</td>
-              <td className="p-4 font-mono text-ember">{formatDuration(v.durationMs / 1000)}</td>
-              <td className="p-4 text-ink/60">{v.country ?? "—"}</td>
-              <td className="p-4 text-ink/40 text-xs">{describeUserAgent(v.userAgent)}</td>
+              <td className={cell}>{v.email}</td>
+              <td className={`${cell} font-mono text-xs text-ember`}>{formatDuration(v.durationMs / 1000)}</td>
+              <td className={`${cell} text-ink/60 whitespace-nowrap`} title={v.city ? "IP tabanlı tahmini konum" : undefined}>
+                {v.country ?? "—"}
+                {v.city && <span className="text-ink/40 text-xs"> · {v.city}</span>}
+              </td>
+              <td className={`${cell} rounded-r-2xl text-ink/40 text-xs`}>{describeUserAgent(v.userAgent)}</td>
             </tr>
           ))}
           {visits.length === 0 && (

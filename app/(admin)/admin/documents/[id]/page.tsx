@@ -13,6 +13,7 @@ import Breadcrumbs from "../../_components/Breadcrumbs";
 import SectionHeading from "../../_components/SectionHeading";
 import ThumbnailImage from "../../_components/ThumbnailImage";
 import { formatDuration } from "@/lib/format-duration";
+import { lookupCity } from "@/lib/geo";
 
 const MONTH_LABELS = [
   "Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara",
@@ -101,6 +102,7 @@ export default async function DocumentAnalyticsPage({
     startedAt: v.startedAt,
     email: v.viewerSession.email,
     country: v.country,
+    city: lookupCity(v.ipAddress),
     userAgent: v.userAgent,
     durationMs: v.pageViewEvents.reduce((sum, e) => sum + e.durationMs, 0),
   }));
@@ -109,110 +111,115 @@ export default async function DocumentAnalyticsPage({
   const avgVisitSeconds =
     totalVisits === 0 ? 0 : Math.round(totalEngagementMs / 1000 / totalVisits);
 
+  const cell = "bg-shell/60 group-hover:bg-surface-muted transition-colors p-4";
+
   return (
-    <div>
-      <Breadcrumbs items={[{ label: "Genel Bakış", href: "/admin" }, { label: document.title }]} />
-      <div className="flex items-start justify-between gap-6 mb-1">
-        <div className="flex-1">
-          <h1 className="font-display font-extrabold text-3xl mb-1">{document.title}</h1>
-          <p className="text-ink/70 mb-1">
-            Toplam izlenme süresi:{" "}
-            <span className="text-ember font-mono font-bold text-base">
-              {formatDuration(totalEngagementMs / 1000)}
-            </span>{" "}
-            · Toplam ziyaret:{" "}
-            <span className="text-signal font-mono font-bold text-base">{totalVisits}</span>
-          </p>
-          <p className="font-mono text-xs text-ink/60">
-            Son güncelleme:{" "}
-            <span className="font-semibold text-ink">
-              {document.updatedAt.toLocaleString("tr-TR")}
-            </span>{" "}
-            · <span className="font-semibold text-ink">{document.pageCount} sayfa</span>
-          </p>
+    <div className="flex flex-col gap-4 md:gap-6">
+      <div className="bg-surface rounded-[28px] px-6 py-5 md:px-8">
+        <Breadcrumbs items={[{ label: "Panel", href: "/admin" }, { label: document.title }]} />
+        <div className="flex items-start justify-between gap-6">
+          <div className="flex-1">
+            <h1 className="font-display font-extrabold text-2xl tracking-tight mb-1">{document.title}</h1>
+            <p className="text-sm text-ink/60 mb-1">
+              Toplam izlenme süresi:{" "}
+              <span className="text-ember font-mono font-bold">
+                {formatDuration(totalEngagementMs / 1000)}
+              </span>{" "}
+              · Toplam ziyaret:{" "}
+              <span className="text-signal-dim font-mono font-bold">{totalVisits}</span>
+            </p>
+            <p className="text-xs text-ink/45">
+              Son güncelleme:{" "}
+              <span className="font-semibold text-ink">
+                {document.updatedAt.toLocaleString("tr-TR")}
+              </span>{" "}
+              · <span className="font-semibold text-ink">{document.pageCount} sayfa</span>
+            </p>
+          </div>
+          <ThumbnailImage
+            src={`/api/documents/${document.slug}/thumbnail/1`}
+            alt={`${document.title} kapak sayfası`}
+            className="w-16 h-auto rounded-lg border border-rule shadow-sm shrink-0"
+          />
         </div>
-        <ThumbnailImage
-          src={`/api/documents/${document.slug}/thumbnail/1`}
-          alt={`${document.title} kapak sayfası`}
-          className="w-16 h-auto rounded border border-rule-paper shadow-sm shrink-0"
-        />
-      </div>
-      <div className="mb-10 mt-7">
-        <StatsCards
-          totalVisits={totalVisits}
-          uniqueViewers={uniqueViewers}
-          avgVisitSeconds={avgVisitSeconds}
-          totalSeconds={Math.round(totalEngagementMs / 1000)}
-        />
       </div>
 
-      <SectionHeading>Son Ziyaretler</SectionHeading>
-      <div className="mb-10">
-        <RecentVisitsTable visits={recentVisits} />
-      </div>
+      <StatsCards
+        totalVisits={totalVisits}
+        uniqueViewers={uniqueViewers}
+        avgVisitSeconds={avgVisitSeconds}
+        totalSeconds={Math.round(totalEngagementMs / 1000)}
+      />
 
-      <SectionHeading>Sayfa Bazında İzlenme Süresi</SectionHeading>
-      <div className="hover-lift bg-surface border border-rule rounded-2xl p-5 mb-10">
+      <section className="bg-surface rounded-[28px] p-6 md:p-8">
+        <SectionHeading>Son Ziyaretler</SectionHeading>
+        <RecentVisitsTable visits={recentVisits} bare />
+      </section>
+
+      <section className="hover-lift bg-surface rounded-[28px] p-6 md:p-8">
+        <SectionHeading>Sayfa Bazında İzlenme Süresi</SectionHeading>
         <PageDurationChart documentId={id} documentSlug={document.slug} pageCount={document.pageCount} />
-        <p className="text-xs text-ink/30 mt-2">
+        <p className="text-xs text-ink/40 mt-3">
           Bir sütunun üzerine gelince o sayfanın görseli ve toplam saniyesi görünür.
         </p>
-      </div>
+      </section>
 
-      <SectionHeading>Drop-off Raporu</SectionHeading>
-      <div className="hover-lift bg-surface border border-rule rounded-2xl p-5 mb-10">
+      <section className="hover-lift bg-surface rounded-[28px] p-6 md:p-8">
+        <SectionHeading>Drop-off Raporu</SectionHeading>
         <DropoffChart data={dropoffData} />
-        <p className="text-xs text-ink/30 mt-2">
+        <p className="text-xs text-ink/40 mt-3">
           Ziyaretlerin yüzde kaçı her sayfaya kadar okumaya devam etmiş — düşüşün başladığı yer
           okuyucuların bırakma noktasıdır.
         </p>
-      </div>
+      </section>
 
-      <SectionHeading>Aylık İzlenme Trendi</SectionHeading>
-      <div className="hover-lift bg-surface border border-rule rounded-2xl p-5 mb-10">
+      <section className="hover-lift bg-surface rounded-[28px] p-6 md:p-8">
+        <SectionHeading>Aylık İzlenme Trendi</SectionHeading>
         <MonthlyChart data={monthlyData} />
-      </div>
+      </section>
 
-      <SectionHeading>Görüntüleyenlerin Konumu</SectionHeading>
-      <div className="hover-lift bg-surface border border-rule rounded-2xl p-5 mb-10">
+      <section className="hover-lift bg-surface rounded-[28px] p-6 md:p-8">
+        <SectionHeading>Görüntüleyenlerin Konumu</SectionHeading>
         <CountryMapLoader countries={countryData} />
-      </div>
+      </section>
 
-      <SectionHeading>Görüntüleyen Bazında Toplam</SectionHeading>
-      <div className="bg-surface border border-rule rounded-2xl overflow-hidden mb-10">
-        <table className="w-full text-sm">
-          <thead className="text-left font-mono text-[11px] uppercase tracking-[0.08em] text-ink/40 border-b border-rule bg-surface-muted">
-            <tr>
-              <th className="p-4">E-posta</th>
-              <th className="p-4">Toplam Süre</th>
-              <th className="p-4"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from(totalsByViewer.entries()).map(([email, ms]) => (
-              <tr key={email} className="border-t border-rule transition-colors hover:bg-surface-muted">
-                <td className="p-4">{email}</td>
-                <td className="p-4 font-mono text-ember">{formatDuration(ms / 1000)}</td>
-                <td className="p-4">
-                  <Link
-                    href={`/admin/documents/${id}/viewers/${encodeURIComponent(email)}`}
-                    className="text-signal hover:text-signal-dim transition-colors text-xs font-medium uppercase tracking-wide"
-                  >
-                    Geçmişi gör →
-                  </Link>
-                </td>
+      <section className="bg-surface rounded-[28px] p-6 md:p-8">
+        <SectionHeading>Görüntüleyen Bazında Toplam</SectionHeading>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-separate border-spacing-y-1.5">
+            <thead>
+              <tr className="text-left text-xs text-ink/40">
+                <th className="font-medium pb-2 pl-4">E-posta</th>
+                <th className="font-medium pb-2">Toplam Süre</th>
+                <th className="pb-2"></th>
               </tr>
-            ))}
-            {totalsByViewer.size === 0 && (
-              <tr>
-                <td className="p-4 text-ink/40" colSpan={3}>
-                  Henüz görüntüleme yok.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {Array.from(totalsByViewer.entries()).map(([email, ms]) => (
+                <tr key={email} className="group">
+                  <td className={`${cell} rounded-l-2xl font-medium`}>{email}</td>
+                  <td className={`${cell} font-mono text-xs text-ember`}>{formatDuration(ms / 1000)}</td>
+                  <td className={`${cell} rounded-r-2xl`}>
+                    <Link
+                      href={`/admin/documents/${id}/viewers/${encodeURIComponent(email)}`}
+                      className="text-signal-dim hover:text-signal transition-colors text-xs font-semibold"
+                    >
+                      Geçmişi gör →
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+              {totalsByViewer.size === 0 && (
+                <tr>
+                  <td className="p-4 text-ink/40" colSpan={3}>
+                    Henüz görüntüleme yok.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

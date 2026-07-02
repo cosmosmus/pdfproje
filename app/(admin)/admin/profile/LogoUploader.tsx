@@ -43,10 +43,8 @@ export default function LogoUploader({ hasLogo }: { hasLogo: boolean }) {
   }
 
   return (
-    <div className="bg-surface border border-rule rounded-2xl p-6">
-      <label className="block font-mono text-[11px] uppercase tracking-[0.08em] text-ink/60 mb-3">
-        Logo
-      </label>
+    <div className="bg-surface rounded-[28px] p-6 md:p-8">
+      <h2 className="font-display font-extrabold text-xl tracking-tight mb-4">Logo</h2>
       <div className="flex items-center gap-4">
         <div className="w-16 h-16 rounded-lg border border-rule bg-shell flex items-center justify-center overflow-hidden shrink-0">
           {preview ? (
@@ -62,16 +60,16 @@ export default function LogoUploader({ hasLogo }: { hasLogo: boolean }) {
               type="button"
               onClick={() => inputRef.current?.click()}
               disabled={status === "uploading"}
-              className="font-mono text-xs uppercase tracking-wide border border-rule rounded px-3 py-1.5 text-ink/70 hover:border-signal hover:text-signal hover:bg-surface-muted transition-colors disabled:opacity-50"
+              className="text-sm font-medium border border-rule rounded-full px-4 py-1.5 text-ink/70 hover:border-ink/30 hover:text-ink transition-colors disabled:opacity-50"
             >
-              {status === "uploading" ? "Yükleniyor..." : "Görsel Yükle"}
+              {status === "uploading" ? "Yükleniyor..." : "Görsel yükle"}
             </button>
             {preview && (
               <button
                 type="button"
                 onClick={handleRemove}
                 disabled={status === "uploading"}
-                className="font-mono text-xs uppercase tracking-wide border border-rule rounded px-3 py-1.5 text-danger hover:bg-surface-muted transition-colors disabled:opacity-50"
+                className="text-sm font-medium border border-rule rounded-full px-4 py-1.5 text-danger hover:border-danger/40 transition-colors disabled:opacity-50"
               >
                 Kaldır
               </button>

@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const file = formData.get("file");
   const title = formData.get("title");
+  const slugInput = formData.get("slug");
 
   if (!(file instanceof File) || file.type !== "application/pdf") {
     return NextResponse.json({ error: "A PDF file is required" }, { status: 400 });
@@ -29,6 +30,20 @@ export async function POST(request: NextRequest) {
   }
   if (typeof title !== "string" || title.trim().length === 0) {
     return NextResponse.json({ error: "A title is required" }, { status: 400 });
+  }
+
+  let slug: string;
+  if (typeof slugInput === "string" && slugInput.trim().length > 0) {
+    slug = slugInput.trim();
+    if (!/^[a-z0-9-]+$/.test(slug)) {
+      return NextResponse.json({ error: "Slug yalnızca küçük harf, rakam ve tire içerebilir" }, { status: 400 });
+    }
+    const existing = await prisma.document.findUnique({ where: { slug } });
+    if (existing) {
+      return NextResponse.json({ error: "Bu slug zaten kullanılıyor, farklı bir slug deneyin" }, { status: 400 });
+    }
+  } else {
+    slug = nanoid(10);
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -41,7 +56,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Could not parse PDF" }, { status: 400 });
   }
 
-  const slug = nanoid(10);
   const storageKey = `documents/${slug}.pdf`;
 
   await saveDocumentFile(storageKey, buffer);

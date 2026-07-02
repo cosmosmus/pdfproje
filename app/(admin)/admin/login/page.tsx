@@ -31,11 +31,11 @@ export default function AdminLoginPage() {
 
   return (
     <div className="max-w-sm mx-auto mt-24">
-      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/40 text-center mb-3">
-        Yetkili Girişi
+      <p className="text-sm font-medium text-ink/45 text-center mb-3">
+        Yetkili girişi
       </p>
-      <div className="bg-surface border border-rule rounded-2xl p-8 shadow-xl shadow-black/5">
-        <h1 className="font-display font-extrabold text-2xl mb-6 text-center">Giriş yap</h1>
+      <div className="bg-surface rounded-[28px] p-8 shadow-xl shadow-black/5">
+        <h1 className="font-display font-extrabold text-2xl tracking-tight mb-6 text-center">Giriş yap</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="email"
@@ -43,7 +43,7 @@ export default function AdminLoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full bg-shell border border-rule rounded-lg px-4 py-3 text-ink placeholder:text-ink/30 focus:border-signal outline-none transition-colors"
+            className="w-full bg-shell border border-rule rounded-xl px-4 py-3 text-ink placeholder:text-ink/30 focus:border-signal outline-none transition-colors"
           />
           <input
             type="password"
@@ -51,13 +51,13 @@ export default function AdminLoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full bg-shell border border-rule rounded-lg px-4 py-3 text-ink placeholder:text-ink/30 focus:border-signal outline-none transition-colors"
+            className="w-full bg-shell border border-rule rounded-xl px-4 py-3 text-ink placeholder:text-ink/30 focus:border-signal outline-none transition-colors"
           />
           {error && <p className="text-danger text-sm">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-signal text-white font-bold rounded-lg px-3 py-3 hover:bg-signal-dim transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 bg-ink text-surface font-semibold rounded-full px-3 py-3 hover:bg-ink-soft transition-colors disabled:opacity-50"
           >
             <IconLogin className="w-4 h-4" />
             {loading ? "Giriş yapılıyor..." : "Giriş yap"}

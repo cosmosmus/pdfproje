@@ -1,7 +1,7 @@
 "use client";
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { chartGrid, chartTick, chartTooltipStyle, colorSignal } from "./chart-theme";
+import { chartGrid, chartTick, chartTooltipStyle, colorInk } from "./chart-theme";
 
 type Datum = { month: string; visits: number; seconds: number };
 
@@ -21,7 +21,7 @@ export default function MonthlyChart({ data }: { data: Datum[] }) {
           contentStyle={chartTooltipStyle}
           cursor={{ fill: "rgba(32,35,43,0.04)" }}
         />
-        <Bar dataKey="visits" fill={colorSignal} radius={[4, 4, 0, 0]} />
+        <Bar dataKey="visits" fill={colorInk} radius={[6, 6, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

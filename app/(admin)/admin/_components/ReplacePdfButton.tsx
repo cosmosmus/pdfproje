@@ -42,7 +42,7 @@ export default function ReplacePdfButton({ documentId }: { documentId: string })
         onClick={() => inputRef.current?.click()}
         disabled={status === "uploading"}
         title="Katalog PDF'ini güncelle (link aynı kalır)"
-        className="flex items-center justify-center w-7 h-7 border border-ember/30 bg-ember/10 rounded text-ember-dim hover:border-ember hover:bg-ember/20 transition-colors disabled:opacity-50"
+        className="flex items-center justify-center w-7 h-7 border border-ember/30 bg-ember/10 rounded-full text-ember-dim hover:border-ember hover:bg-ember/20 transition-colors disabled:opacity-50"
       >
         <IconRefresh className={`w-3.5 h-3.5 ${status === "uploading" ? "animate-spin" : ""}`} />
       </button>

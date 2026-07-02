@@ -1,7 +1,7 @@
 "use client";
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { chartGrid, chartTick, chartTooltipStyle, colorEmber } from "./chart-theme";
+import { chartGrid, chartTick, chartTooltipStyle, colorSignal } from "./chart-theme";
 
 type Datum = { title: string; seconds: number };
 
@@ -21,7 +21,7 @@ export default function TopDocumentsChart({ data }: { data: Datum[] }) {
           contentStyle={chartTooltipStyle}
           cursor={{ fill: "rgba(32,35,43,0.04)" }}
         />
-        <Bar dataKey="seconds" fill={colorEmber} radius={[0, 4, 4, 0]} />
+        <Bar dataKey="seconds" fill={colorSignal} radius={[0, 6, 6, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
