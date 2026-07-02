@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { trackRequestSchema } from "@/lib/validation";
 import { gateCookieName, verifyGateToken } from "@/lib/auth";
 import { getClientIp, lookupCountry } from "@/lib/geo";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
@@ -23,6 +24,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Normal viewer sends one batch every few seconds at most; this only stops abuse.
+  const { allowed } = rateLimit(`track:${gate.sid}`, 300, 10 * 60 * 1000);
+  if (!allowed) {
+    return new NextResponse(null, { status: 429 });
+  }
+
   const validEntries = entries.filter(
     (entry) => entry.page >= 1 && entry.page <= document.pageCount
   );
@@ -33,6 +40,15 @@ export async function POST(request: NextRequest) {
   const ip = getClientIp(request.headers);
   const country = lookupCountry(ip);
   const userAgent = request.headers.get("user-agent");
+
+  // A visit id may only be reused by the session that created it.
+  const existingVisit = await prisma.visit.findUnique({
+    where: { id: visitId },
+    select: { viewerSessionId: true },
+  });
+  if (existingVisit && existingVisit.viewerSessionId !== gate.sid) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
 
   await prisma.visit.upsert({
     where: { id: visitId },

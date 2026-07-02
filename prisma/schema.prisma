@@ -22,6 +22,15 @@ model AdminUser {
   contactPhone     String?
   contactWhatsapp  String?
   websiteUrl       String?
+
+  // Customizable display names for contact groups (null = built-in default)
+  labelAppMember         String?
+  labelUnknownCustomer   String?
+  labelCurrentCustomer   String?
+  labelPotentialCustomer String?
+
+  faviconStorageKey  String?
+  faviconContentType String?
 }
 
 model Document {

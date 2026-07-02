@@ -3,10 +3,14 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
-import PageDurationChart from "./PageDurationChart";
-import DropoffChart from "./DropoffChart";
-import MonthlyChart from "../../_components/MonthlyChart";
+import dynamic from "next/dynamic";
 import CountryMapLoader from "../../_components/CountryMapLoader";
+
+// Recharts ağır bir paket: grafikler ayrı chunk'ta, sabit yükseklikli iskeletle gelir.
+const chartSkeleton = () => <div className="h-[260px] animate-pulse bg-surface-muted rounded-xl" />;
+const PageDurationChart = dynamic(() => import("./PageDurationChart"), { loading: chartSkeleton });
+const DropoffChart = dynamic(() => import("./DropoffChart"), { loading: chartSkeleton });
+const MonthlyChart = dynamic(() => import("../../_components/MonthlyChart"), { loading: chartSkeleton });
 import StatsCards from "../../_components/StatsCards";
 import RecentVisitsTable from "../../_components/RecentVisitsTable";
 import Breadcrumbs from "../../_components/Breadcrumbs";
@@ -31,16 +35,26 @@ export default async function DocumentAnalyticsPage({
   const document = await prisma.document.findUnique({ where: { id } });
   if (!document) notFound();
 
-  const events = await prisma.pageViewEvent.findMany({
-    where: { documentId: id },
-    include: { viewerSession: { select: { email: true } } },
-  });
-
-  const visits = await prisma.visit.findMany({
-    where: { documentId: id },
-    include: { pageViewEvents: true, viewerSession: { select: { email: true } } },
-    orderBy: { startedAt: "desc" },
-  });
+  // Yalnızca kullanılan kolonları çek; iki bağımsız sorguyu paralel çalıştır.
+  const [events, visits] = await Promise.all([
+    prisma.pageViewEvent.findMany({
+      where: { documentId: id },
+      select: { durationMs: true, viewerSession: { select: { email: true } } },
+    }),
+    prisma.visit.findMany({
+      where: { documentId: id },
+      select: {
+        id: true,
+        startedAt: true,
+        country: true,
+        userAgent: true,
+        ipAddress: true,
+        pageViewEvents: { select: { pageNumber: true, durationMs: true } },
+        viewerSession: { select: { email: true } },
+      },
+      orderBy: { startedAt: "desc" },
+    }),
+  ]);
 
   // Per-viewer (email) totals for the "who viewed how much" table.
   const totalsByViewer = new Map<string, number>();

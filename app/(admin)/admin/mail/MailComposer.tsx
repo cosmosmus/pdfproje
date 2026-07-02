@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import type { GroupLabels } from "@/lib/group-labels";
 
 export type ContactGroup = "APP_MEMBER" | "UNKNOWN_CUSTOMER" | "CURRENT_CUSTOMER" | "POTENTIAL_CUSTOMER";
 
@@ -13,23 +14,24 @@ export type EmailEntry = {
 
 type FilterTab = "ALL" | ContactGroup;
 
-const TABS: { key: FilterTab; label: string }[] = [
-  { key: "ALL", label: "Tümü" },
-  { key: "APP_MEMBER", label: "App Üyesi" },
-  { key: "UNKNOWN_CUSTOMER", label: "Tanınmayan" },
-  { key: "CURRENT_CUSTOMER", label: "Cari" },
-  { key: "POTENTIAL_CUSTOMER", label: "Potansiyel" },
-];
-
 export default function MailComposer({
   emails,
   documents,
   baseUrl,
+  groupLabels,
 }: {
   emails: EmailEntry[];
   documents: Doc[];
   baseUrl: string;
+  groupLabels: GroupLabels;
 }) {
+  const TABS: { key: FilterTab; label: string }[] = [
+    { key: "ALL", label: "Tümü" },
+    { key: "APP_MEMBER", label: groupLabels.APP_MEMBER },
+    { key: "UNKNOWN_CUSTOMER", label: groupLabels.UNKNOWN_CUSTOMER },
+    { key: "CURRENT_CUSTOMER", label: groupLabels.CURRENT_CUSTOMER },
+    { key: "POTENTIAL_CUSTOMER", label: groupLabels.POTENTIAL_CUSTOMER },
+  ];
   const [activeTab, setActiveTab] = useState<FilterTab>("ALL");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [subject, setSubject] = useState("");
@@ -120,7 +122,7 @@ export default function MailComposer({
       <div className="bg-surface rounded-[28px] overflow-hidden self-start">
 
         {/* Grup sekmeleri */}
-        <div className="flex gap-1 overflow-x-auto p-4 pb-2">
+        <div className="flex flex-wrap gap-1.5 p-4 pb-2">
           {TABS.map((tab) => (
             <button
               key={tab.key}

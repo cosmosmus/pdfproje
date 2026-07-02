@@ -20,11 +20,14 @@ export async function GET(
   }
 
   const buffer = await readDocumentFile(document.storageKey);
+  // Strip quotes/control chars so a crafted upload filename can't inject headers.
+  const safeFilename = document.originalFilename.replace(/[^\w.\- ]/g, "_");
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${document.originalFilename}"`,
+      "Content-Disposition": `inline; filename="${safeFilename}"`,
       "Cache-Control": "private, no-store",
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }

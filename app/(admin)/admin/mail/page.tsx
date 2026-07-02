@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import MailComposer, { type EmailEntry } from "./MailComposer";
+import { resolveGroupLabels } from "@/lib/group-labels";
 
 export default async function MailPage() {
   const admin = await requireAdmin();
@@ -13,7 +14,7 @@ export default async function MailPage() {
   const proto = process.env.NODE_ENV === "production" ? "https" : "http";
   const baseUrl = `${proto}://${host}`;
 
-  const [sessions, documents, contacts] = await Promise.all([
+  const [sessions, documents, contacts, adminUser] = await Promise.all([
     prisma.viewerSession.findMany({
       select: { email: true, documentId: true },
       orderBy: { firstSeenAt: "desc" },
@@ -24,7 +25,18 @@ export default async function MailPage() {
       orderBy: { createdAt: "desc" },
     }),
     prisma.contact.findMany({ select: { email: true, group: true } }),
+    prisma.adminUser.findUnique({
+      where: { email: admin },
+      select: {
+        labelAppMember: true,
+        labelUnknownCustomer: true,
+        labelCurrentCustomer: true,
+        labelPotentialCustomer: true,
+      },
+    }),
   ]);
+
+  const groupLabels = resolveGroupLabels(adminUser);
 
   const docMap = new Map(documents.map((d) => [d.id, d.title]));
   const groupMap = new Map(contacts.map((c) => [c.email, c.group]));
@@ -50,7 +62,7 @@ export default async function MailPage() {
           Dökümanlarını görüntüleyen kişilere mail gönder.
         </p>
       </div>
-      <MailComposer emails={emails} documents={documents} baseUrl={baseUrl} />
+      <MailComposer emails={emails} documents={documents} baseUrl={baseUrl} groupLabels={groupLabels} />
     </div>
   );
 }

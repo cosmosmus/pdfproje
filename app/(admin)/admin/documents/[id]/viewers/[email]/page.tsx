@@ -5,9 +5,14 @@ import { describeUserAgent } from "@/lib/user-agent";
 import CountryMapLoader from "../../../../_components/CountryMapLoader";
 import Breadcrumbs from "../../../../_components/Breadcrumbs";
 import SectionHeading from "../../../../_components/SectionHeading";
-import ViewerPageChart from "./ViewerPageChart";
+import dynamic from "next/dynamic";
+
+const ViewerPageChart = dynamic(() => import("./ViewerPageChart"), {
+  loading: () => <div className="h-[260px] animate-pulse bg-surface-muted rounded-xl" />,
+});
 import { formatDuration } from "@/lib/format-duration";
 import { lookupCity } from "@/lib/geo";
+import { countryFlag } from "@/lib/country-flag";
 
 const WINDOWS_DAYS = [7, 30, 90] as const;
 
@@ -33,7 +38,15 @@ export default async function ViewerHistoryPage({
   const visits = await prisma.visit.findMany({
     where: { viewerSessionId: viewerSession.id },
     orderBy: { startedAt: "desc" },
-    include: { pageViewEvents: true },
+    select: {
+      id: true,
+      startedAt: true,
+      country: true,
+      userAgent: true,
+      ipAddress: true,
+      referrer: true,
+      pageViewEvents: { select: { pageNumber: true, durationMs: true, createdAt: true } },
+    },
   });
 
   const allEvents = visits.flatMap((v) => v.pageViewEvents);
@@ -137,6 +150,9 @@ export default async function ViewerHistoryPage({
                     </td>
                     <td className={`${cell} font-mono text-xs text-ember`}>{formatDuration(visitMs / 1000)}</td>
                     <td className={`${cell} whitespace-nowrap`} title={city ? "IP tabanlı tahmini konum" : undefined}>
+                      {countryFlag(visit.country) && (
+                        <span className="mr-1.5 text-base leading-none align-middle">{countryFlag(visit.country)}</span>
+                      )}
                       {visit.country ?? "—"}
                       {city && <span className="text-ink/40 text-xs"> · {city}</span>}
                     </td>

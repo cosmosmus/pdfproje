@@ -13,7 +13,10 @@ export async function PATCH(
 
   const { email } = await params;
   const decoded = decodeURIComponent(email);
-  const { group } = await request.json();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(decoded) || decoded.length > 254) {
+    return NextResponse.json({ error: "Geçersiz e-posta" }, { status: 400 });
+  }
+  const { group } = await request.json().catch(() => ({}));
 
   if (!VALID_GROUPS.includes(group)) {
     return NextResponse.json({ error: "Geçersiz grup" }, { status: 400 });

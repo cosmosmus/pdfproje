@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import type { GroupLabels } from "@/lib/group-labels";
 
 export type ContactGroup =
   | "APP_MEMBER"
@@ -14,29 +15,27 @@ export type ContactRow = {
   firstSeen: string;
 };
 
-const GROUP_LABELS: Record<ContactGroup, string> = {
-  APP_MEMBER: "App Üyesi",
-  UNKNOWN_CUSTOMER: "Tanınmayan Müşteri",
-  CURRENT_CUSTOMER: "Cari Müşterisi",
-  POTENTIAL_CUSTOMER: "Potansiyel Müşteri",
-};
-
 type FilterTab = "ALL" | "UNASSIGNED" | ContactGroup;
-
-const TABS: { key: FilterTab; label: string }[] = [
-  { key: "ALL", label: "Tümü" },
-  { key: "UNASSIGNED", label: "Tanımlanmamış" },
-  { key: "APP_MEMBER", label: "App Üyesi" },
-  { key: "UNKNOWN_CUSTOMER", label: "Tanınmayan" },
-  { key: "CURRENT_CUSTOMER", label: "Cari" },
-  { key: "POTENTIAL_CUSTOMER", label: "Potansiyel" },
-];
 
 function isAssigned(group: ContactGroup) {
   return group !== "UNKNOWN_CUSTOMER";
 }
 
-export default function ContactsTable({ rows: initialRows }: { rows: ContactRow[] }) {
+export default function ContactsTable({
+  rows: initialRows,
+  groupLabels,
+}: {
+  rows: ContactRow[];
+  groupLabels: GroupLabels;
+}) {
+  const TABS: { key: FilterTab; label: string }[] = [
+    { key: "ALL", label: "Tümü" },
+    { key: "UNASSIGNED", label: "Tanımlanmamış" },
+    { key: "APP_MEMBER", label: groupLabels.APP_MEMBER },
+    { key: "UNKNOWN_CUSTOMER", label: groupLabels.UNKNOWN_CUSTOMER },
+    { key: "CURRENT_CUSTOMER", label: groupLabels.CURRENT_CUSTOMER },
+    { key: "POTENTIAL_CUSTOMER", label: groupLabels.POTENTIAL_CUSTOMER },
+  ];
   const [rows, setRows] = useState<ContactRow[]>(initialRows);
   const [activeTab, setActiveTab] = useState<FilterTab>("ALL");
   const [saving, setSaving] = useState<Set<string>>(new Set());
@@ -72,7 +71,7 @@ export default function ContactsTable({ rows: initialRows }: { rows: ContactRow[
     <div className="bg-surface rounded-[28px] p-6 md:p-8">
 
       {/* Filtre sekmeleri */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 mb-5">
+      <div className="flex flex-wrap gap-1.5 mb-5">
         {TABS.map((tab) => {
           const count =
             tab.key === "ALL"
@@ -161,7 +160,7 @@ export default function ContactsTable({ rows: initialRows }: { rows: ContactRow[
                         style={{ backgroundImage: "none" }}
                       >
                         {(
-                          Object.entries(GROUP_LABELS) as [ContactGroup, string][]
+                          Object.entries(groupLabels) as [ContactGroup, string][]
                         ).map(([key, label]) => (
                           <option key={key} value={key}>
                             {label}

@@ -4,10 +4,14 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import { lookupCity } from "@/lib/geo";
+import dynamic from "next/dynamic";
 import StatsCards from "./_components/StatsCards";
-import TopDocumentsChart from "./_components/TopDocumentsChart";
-import MonthlyChart from "./_components/MonthlyChart";
 import CountryMapLoader from "./_components/CountryMapLoader";
+
+// Recharts ağır bir paket: grafikler ayrı chunk'ta, sabit yükseklikli iskeletle gelir.
+const chartSkeleton = () => <div className="h-[260px] animate-pulse bg-surface-muted rounded-xl" />;
+const TopDocumentsChart = dynamic(() => import("./_components/TopDocumentsChart"), { loading: chartSkeleton });
+const MonthlyChart = dynamic(() => import("./_components/MonthlyChart"), { loading: chartSkeleton });
 import RecentVisitsTable from "./_components/RecentVisitsTable";
 import LinkRowActions from "./_components/LinkRowActions";
 import ReplacePdfButton from "./_components/ReplacePdfButton";
@@ -23,23 +27,30 @@ export default async function AdminDashboardPage() {
   const admin = await requireAdmin();
   if (!admin) redirect("/admin/login");
 
-  const documents = await prisma.document.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { _count: { select: { viewerSessions: true } } },
-  });
+  // Yalnızca ekranda kullanılan kolonları çek; bağımsız sorguları paralel çalıştır.
+  const [documents, headersList, visits] = await Promise.all([
+    prisma.document.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { _count: { select: { viewerSessions: true } } },
+    }),
+    headers(),
+    prisma.visit.findMany({
+      select: {
+        id: true,
+        startedAt: true,
+        country: true,
+        userAgent: true,
+        ipAddress: true,
+        pageViewEvents: { select: { durationMs: true } },
+        viewerSession: { select: { email: true } },
+        document: { select: { id: true, title: true } },
+      },
+      orderBy: { startedAt: "desc" },
+    }),
+  ]);
 
-  const headersList = await headers();
   const host = headersList.get("host");
   const proto = process.env.NODE_ENV === "production" ? "https" : "http";
-
-  const visits = await prisma.visit.findMany({
-    include: {
-      pageViewEvents: true,
-      viewerSession: { select: { email: true } },
-      document: { select: { id: true, title: true } },
-    },
-    orderBy: { startedAt: "desc" },
-  });
 
   const totalVisits = visits.length;
   const totalEngagementMs = visits.reduce(

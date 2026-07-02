@@ -4,6 +4,8 @@ import { prisma } from "@/lib/db";
 import ProfileForm from "./ProfileForm";
 import LogoUploader from "./LogoUploader";
 import ContactForm from "./ContactForm";
+import GroupLabelsForm from "./GroupLabelsForm";
+import FaviconUploader from "./FaviconUploader";
 import Breadcrumbs from "../_components/Breadcrumbs";
 
 export default async function AdminProfilePage() {
@@ -24,11 +26,12 @@ export default async function AdminProfilePage() {
         {/* Sol kolon: Logo + Hesap */}
         <div className="space-y-4 md:space-y-6">
           <LogoUploader hasLogo={Boolean(admin?.logoStorageKey)} />
+          <FaviconUploader hasFavicon={Boolean(admin?.faviconStorageKey)} />
           <ProfileForm currentEmail={email} />
         </div>
 
-        {/* Sağ kolon: İletişim Bilgileri */}
-        <div>
+        {/* Sağ kolon: İletişim Bilgileri + Grup İsimleri */}
+        <div className="space-y-4 md:space-y-6">
           <ContactForm
             initial={{
               companyName: admin?.companyName ?? "",
@@ -38,6 +41,14 @@ export default async function AdminProfilePage() {
               contactInstagram: admin?.contactInstagram ?? "",
               contactLinkedin: admin?.contactLinkedin ?? "",
               websiteUrl: admin?.websiteUrl ?? "",
+            }}
+          />
+          <GroupLabelsForm
+            initial={{
+              labelAppMember: admin?.labelAppMember ?? "",
+              labelUnknownCustomer: admin?.labelUnknownCustomer ?? "",
+              labelCurrentCustomer: admin?.labelCurrentCustomer ?? "",
+              labelPotentialCustomer: admin?.labelPotentialCustomer ?? "",
             }}
           />
         </div>

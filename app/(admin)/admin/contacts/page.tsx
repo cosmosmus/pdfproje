@@ -2,18 +2,30 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import ContactsTable, { type ContactRow } from "./ContactsTable";
+import { resolveGroupLabels } from "@/lib/group-labels";
 
 export default async function ContactsPage() {
   const admin = await requireAdmin();
   if (!admin) redirect("/admin/login");
 
-  const [sessions, contacts] = await Promise.all([
+  const [sessions, contacts, adminUser] = await Promise.all([
     prisma.viewerSession.findMany({
       select: { email: true, documentId: true, firstSeenAt: true },
       orderBy: { firstSeenAt: "desc" },
     }),
     prisma.contact.findMany({ select: { email: true, group: true } }),
+    prisma.adminUser.findUnique({
+      where: { email: admin },
+      select: {
+        labelAppMember: true,
+        labelUnknownCustomer: true,
+        labelCurrentCustomer: true,
+        labelPotentialCustomer: true,
+      },
+    }),
   ]);
+
+  const groupLabels = resolveGroupLabels(adminUser);
 
   const groupMap = new Map(contacts.map((c) => [c.email, c.group]));
 
@@ -38,7 +50,7 @@ export default async function ContactsPage() {
           Dökümanlarını görüntüleyen kişilere grup ata.
         </p>
       </div>
-      <ContactsTable rows={rows} />
+      <ContactsTable rows={rows} groupLabels={groupLabels} />
     </div>
   );
 }

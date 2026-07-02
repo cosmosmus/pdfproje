@@ -22,6 +22,8 @@ export async function GET() {
       headers: {
         "Content-Type": admin.logoContentType,
         "Cache-Control": "private, max-age=300",
+        "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
       },
     });
   } catch {

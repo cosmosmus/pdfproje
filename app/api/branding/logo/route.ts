@@ -17,6 +17,9 @@ export async function GET() {
       headers: {
         "Content-Type": admin.logoContentType,
         "Cache-Control": "public, max-age=300, stale-while-revalidate=60",
+        "X-Content-Type-Options": "nosniff",
+        // SVG doğrudan adres çubuğunda açılırsa bile script çalışamasın.
+        "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
       },
     });
   } catch {
