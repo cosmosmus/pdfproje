@@ -2,6 +2,16 @@
 
 import { useState } from "react";
 
+type Point = { x: number; y: number };
+
+const FORM_WIDTH = 288; // w-72 ile aynı tutulmalı
+
+// Formlar tablonun overflow kabında absolute durunca autofocus kabı
+// kaydırıyordu; fixed konum + preventScroll ile sayfa yerinden oynamaz.
+function focusWithoutScroll(el: HTMLInputElement | null) {
+  el?.focus({ preventScroll: true });
+}
+
 export default function LinkRowActions({
   documentId,
   link,
@@ -10,12 +20,18 @@ export default function LinkRowActions({
   link: string;
 }) {
   const [copied, setCopied] = useState(false);
-  const [showMailForm, setShowMailForm] = useState(false);
-  const [showWhatsappForm, setShowWhatsappForm] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState<Point | null>(null);
+  const [mailPos, setMailPos] = useState<Point | null>(null);
+  const [whatsappPos, setWhatsappPos] = useState<Point | null>(null);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+
+  function formPoint(button: HTMLElement): Point {
+    const rect = button.getBoundingClientRect();
+    return { x: Math.max(8, rect.right - FORM_WIDTH), y: rect.bottom + 4 };
+  }
 
   async function handleCopy() {
     await navigator.clipboard.writeText(link);
@@ -42,7 +58,7 @@ export default function LinkRowActions({
     setEmail("");
     setTimeout(() => {
       setStatus("idle");
-      setShowMailForm(false);
+      setMailPos(null);
     }, 1500);
   }
 
@@ -52,13 +68,20 @@ export default function LinkRowActions({
     if (!digits) return;
     const message = encodeURIComponent(`Döküman linki: ${link}`);
     window.open(`https://wa.me/${digits}?text=${message}`, "_blank");
-    setShowWhatsappForm(false);
+    setWhatsappPos(null);
     setPhone("");
   }
 
   return (
-    <div className="relative inline-flex items-center gap-1">
-      <span className="relative group">
+    <div className="inline-flex items-center gap-1">
+      <span
+        className="relative"
+        onMouseEnter={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          setTooltipPos({ x: rect.left, y: rect.bottom });
+        }}
+        onMouseLeave={() => setTooltipPos(null)}
+      >
         <button
           type="button"
           onClick={handleCopy}
@@ -75,22 +98,24 @@ export default function LinkRowActions({
             </svg>
           )}
         </button>
-        <span className="hidden group-hover:block absolute left-0 top-full pt-1 z-10">
-          <a
-            href={link}
-            target="_blank"
-            className="block bg-surface border border-rule rounded-lg shadow-xl shadow-black/10 px-3 py-1.5 font-mono text-xs text-signal hover:text-signal-dim whitespace-nowrap"
-          >
-            {link}
-          </a>
-        </span>
+        {tooltipPos && (
+          <span className="fixed z-50 pt-1" style={{ left: tooltipPos.x, top: tooltipPos.y }}>
+            <a
+              href={link}
+              target="_blank"
+              className="block bg-surface border border-rule rounded-lg shadow-xl shadow-black/10 px-3 py-1.5 font-mono text-xs text-signal hover:text-signal-dim whitespace-nowrap"
+            >
+              {link}
+            </a>
+          </span>
+        )}
       </span>
 
       <button
         type="button"
-        onClick={() => {
-          setShowMailForm((s) => !s);
-          setShowWhatsappForm(false);
+        onClick={(e) => {
+          setWhatsappPos(null);
+          setMailPos(mailPos ? null : formPoint(e.currentTarget));
         }}
         title="Mail ile gönder"
         className="p-1.5 rounded-full hover:bg-surface-muted text-ink/40 hover:text-signal transition-colors"
@@ -103,9 +128,9 @@ export default function LinkRowActions({
 
       <button
         type="button"
-        onClick={() => {
-          setShowWhatsappForm((s) => !s);
-          setShowMailForm(false);
+        onClick={(e) => {
+          setMailPos(null);
+          setWhatsappPos(whatsappPos ? null : formPoint(e.currentTarget));
         }}
         title="WhatsApp ile gönder"
         className="p-1.5 rounded-full hover:bg-surface-muted text-signal"
@@ -116,15 +141,16 @@ export default function LinkRowActions({
         </svg>
       </button>
 
-      {showMailForm && (
+      {mailPos && (
         <form
           onSubmit={handleSendEmail}
-          className="absolute right-0 top-full mt-1 z-10 bg-surface border border-rule rounded-lg shadow-xl shadow-black/10 p-3 flex gap-2 w-72"
+          className="fixed z-50 bg-surface border border-rule rounded-lg shadow-xl shadow-black/10 p-3 flex gap-2 w-72"
+          style={{ left: mailPos.x, top: mailPos.y }}
         >
           <input
             type="email"
             required
-            autoFocus
+            ref={focusWithoutScroll}
             placeholder="alici@firma.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -141,15 +167,16 @@ export default function LinkRowActions({
         </form>
       )}
 
-      {showWhatsappForm && (
+      {whatsappPos && (
         <form
           onSubmit={handleSendWhatsapp}
-          className="absolute right-0 top-full mt-1 z-10 bg-surface border border-rule rounded-lg shadow-xl shadow-black/10 p-3 flex gap-2 w-72"
+          className="fixed z-50 bg-surface border border-rule rounded-lg shadow-xl shadow-black/10 p-3 flex gap-2 w-72"
+          style={{ left: whatsappPos.x, top: whatsappPos.y }}
         >
           <input
             type="tel"
             required
-            autoFocus
+            ref={focusWithoutScroll}
             placeholder="905xxxxxxxxx"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}

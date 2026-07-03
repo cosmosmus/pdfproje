@@ -121,27 +121,20 @@ export default function MailComposer({
       {/* Sol: Alıcı listesi */}
       <div className="bg-surface rounded-[28px] overflow-hidden self-start">
 
-        {/* Grup sekmeleri */}
-        <div className="flex flex-wrap gap-1.5 p-4 pb-2">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setActiveTab(tab.key)}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
-                activeTab === tab.key
-                  ? "bg-ink text-surface"
-                  : "text-ink/50 hover:bg-surface-muted hover:text-ink"
-              }`}
-            >
-              {tab.label}
-              {tab.key !== "ALL" && (
-                <span className={`ml-1 ${activeTab === tab.key ? "text-surface/60" : "text-ink/30"}`}>
-                  ({countByGroup(tab.key as ContactGroup)})
-                </span>
-              )}
-            </button>
-          ))}
+        {/* Grup filtresi */}
+        <div className="p-4 pb-3">
+          <label className="block text-xs font-medium text-ink/50 mb-1.5">Grup</label>
+          <select
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value as FilterTab)}
+            className="w-full bg-shell border border-rule rounded-xl px-4 py-2.5 text-sm text-ink focus:border-signal focus:ring-2 focus:ring-signal/10 outline-none transition-all"
+          >
+            {TABS.map((tab) => (
+              <option key={tab.key} value={tab.key}>
+                {tab.label} ({tab.key === "ALL" ? emails.length : countByGroup(tab.key as ContactGroup)})
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Seç/kaldır */}
