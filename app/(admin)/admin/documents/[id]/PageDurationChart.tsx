@@ -20,19 +20,21 @@ function ChartTooltip({
   active,
   payload,
   documentSlug,
+  version,
   cachedPages,
 }: {
   active?: boolean;
   payload?: { payload: ChartDatum }[];
   documentSlug: string;
-  cachedPages: Set<number>;
+  version: number;
+  cachedPages: Set<string>;
 }) {
   if (!active || !payload || payload.length === 0) return null;
   const { page, seconds } = payload[0].payload;
-  const url = `/api/documents/${documentSlug}/thumbnail/${page}`;
+  const url = `/api/documents/${documentSlug}/thumbnail/${page}?v=${version}`;
   return (
     <div className="bg-surface border border-rule rounded-xl shadow-2xl shadow-black/15 p-3 flex gap-3 items-start">
-      {cachedPages.has(page) && (
+      {cachedPages.has(`${version}:${page}`) && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={url}
@@ -52,43 +54,47 @@ export default function PageDurationChart({
   documentId,
   documentSlug,
   pageCount,
+  version,
 }: {
   documentId: string;
   documentSlug: string;
   pageCount: number;
+  version: number;
 }) {
   const [range, setRange] = useState<Range>("all");
   const [data, setData] = useState<ChartDatum[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cachedPages, setCachedPages] = useState<Set<number>>(new Set());
+  // Anahtar "version:page" — versiyon değişince eski girdiler yeni versiyonun
+  // görselleri varmış gibi görünmesin.
+  const [cachedPages, setCachedPages] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/admin/documents/${documentId}/page-duration?range=${range}`)
+    fetch(`/api/admin/documents/${documentId}/page-duration?range=${range}&v=${version}`)
       .then((r) => r.json())
       .then((body) => {
         setData(body.data ?? []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [documentId, range]);
+  }, [documentId, range, version]);
 
   // Preload page thumbnails into browser cache on mount, update state as each one loads.
   useEffect(() => {
     if (pageCount < 1 || !documentSlug) return;
     for (let p = 1; p <= pageCount; p++) {
       const img = new window.Image();
-      const page = p;
-      img.onload = () => setCachedPages((prev) => new Set(prev).add(page));
-      img.src = `/api/documents/${documentSlug}/thumbnail/${page}`;
+      const key = `${version}:${p}`;
+      img.onload = () => setCachedPages((prev) => new Set(prev).add(key));
+      img.src = `/api/documents/${documentSlug}/thumbnail/${p}?v=${version}`;
     }
-  }, [documentSlug, pageCount]);
+  }, [documentSlug, pageCount, version]);
 
   const isEmpty = data.every((d) => d.seconds === 0);
 
   return (
     <div>
-      <div className="flex gap-1 mb-5">
+      <div className="flex flex-wrap gap-1 mb-5">
         {RANGES.map((r) => (
           <button
             key={r.key}
@@ -130,6 +136,7 @@ export default function PageDurationChart({
                   active={props.active}
                   payload={props.payload as unknown as { payload: ChartDatum }[] | undefined}
                   documentSlug={documentSlug}
+                  version={version}
                   cachedPages={cachedPages}
                 />
               )}

@@ -13,6 +13,7 @@ const chartSkeleton = () => <div className="h-[260px] animate-pulse bg-surface-m
 const TopDocumentsChart = dynamic(() => import("./_components/TopDocumentsChart"), { loading: chartSkeleton });
 const MonthlyChart = dynamic(() => import("./_components/MonthlyChart"), { loading: chartSkeleton });
 import RecentVisitsTable from "./_components/RecentVisitsTable";
+import LiveVisitors from "./_components/LiveVisitors";
 import LinkRowActions from "./_components/LinkRowActions";
 import ReplacePdfButton from "./_components/ReplacePdfButton";
 import DocumentRowActions from "./_components/DocumentRowActions";
@@ -128,6 +129,8 @@ export default async function AdminDashboardPage() {
         </Link>
       </div>
 
+      {documents.length === 0 ? null : <LiveVisitors />}
+
       {documents.length === 0 ? null : (
         <StatsCards
           totalVisits={totalVisits}
@@ -178,7 +181,7 @@ export default async function AdminDashboardPage() {
                     </td>
                     <td className={`${cell} whitespace-nowrap`}>
                       <div className="flex items-center gap-2">
-                        <ReplacePdfButton documentId={doc.id} />
+                        <ReplacePdfButton documentId={doc.id} documentTitle={doc.title} />
                         <LinkRowActions documentId={doc.id} link={`${proto}://${host}/doc/${doc.slug}`} />
                       </div>
                     </td>

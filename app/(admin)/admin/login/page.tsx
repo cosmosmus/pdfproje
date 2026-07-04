@@ -30,7 +30,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="max-w-sm mx-auto mt-24">
+    <div className="max-w-sm mx-auto mt-16 sm:mt-24">
       <p className="text-sm font-medium text-ink/45 text-center mb-3">
         Yetkili girişi
       </p>

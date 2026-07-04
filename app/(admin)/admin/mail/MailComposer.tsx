@@ -228,7 +228,7 @@ export default function MailComposer({
           <label className="block text-xs font-medium text-ink/50 mb-1.5">
             Görsel <span className="text-ink/30">(opsiyonel)</span>
           </label>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => imageRef.current?.click()}
@@ -255,7 +255,7 @@ export default function MailComposer({
         </div>
 
         {/* Gönder */}
-        <div className="flex items-center gap-4 pt-1">
+        <div className="flex flex-wrap items-center gap-4 pt-1">
           <button
             type="button"
             onClick={handleSend}

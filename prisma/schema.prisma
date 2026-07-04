@@ -34,19 +34,38 @@ model AdminUser {
 }
 
 model Document {
-  id               String          @id @default(uuid())
-  slug             String          @unique
+  id               String            @id @default(uuid())
+  slug             String            @unique
   title            String
   originalFilename String
   storageKey       String
   pageCount        Int
   fileSizeBytes    Int
-  isActive         Boolean         @default(true)
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  /// Incremented every time the PDF is replaced; visits are stamped with it
+  /// so stats can be split per PDF version.
+  version          Int               @default(1)
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   pageViewEvents   PageViewEvent[]
   viewerSessions   ViewerSession[]
   visits           Visit[]
+  versions         DocumentVersion[]
+}
+
+/// Snapshot of the PDF's metadata at each version — one row per upload/replace.
+/// Needed to draw old-version charts with the correct page count.
+model DocumentVersion {
+  id               String   @id @default(uuid())
+  documentId       String
+  version          Int
+  pageCount        Int
+  originalFilename String
+  fileSizeBytes    Int
+  createdAt        DateTime @default(now())
+  document         Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, version])
 }
 
 model ViewerSession {
@@ -70,6 +89,8 @@ model Visit {
   id              String          @id
   documentId      String
   viewerSessionId String
+  /// Document.version at the time the visit started.
+  documentVersion Int             @default(1)
   ipAddress       String?
   userAgent       String?
   referrer        String?

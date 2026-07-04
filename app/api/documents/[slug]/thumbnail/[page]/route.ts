@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { readDocumentFile } from "@/lib/storage";
-import { thumbnailKey } from "@/lib/thumbnails";
+import { readThumbnail } from "@/lib/thumbnails";
 import { gateCookieName, verifyGateToken } from "@/lib/auth";
 import { requireAdmin } from "@/lib/admin-session";
 
@@ -17,10 +16,16 @@ export async function GET(
 
   const document = await prisma.document.findUnique({
     where: { slug },
-    select: { id: true },
+    select: { id: true, version: true },
   });
   if (!document) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const versionParam = request.nextUrl.searchParams.get("v");
+  const version = versionParam === null ? document.version : Number(versionParam);
+  if (!Number.isInteger(version) || version < 1 || version > document.version) {
+    return NextResponse.json({ error: "Invalid version" }, { status: 400 });
   }
 
   // Page renders are readable content: only gated viewers of this document
@@ -28,7 +33,9 @@ export async function GET(
   // be bypassed entirely by requesting thumbnails.
   const cookieValue = request.cookies.get(gateCookieName(document.id))?.value;
   const gate = cookieValue ? await verifyGateToken(cookieValue, document.id) : null;
-  if (!gate) {
+  // Gated viewers only ever see the current PDF; past versions are admin-only.
+  const gateSuffices = gate !== null && version === document.version;
+  if (!gateSuffices) {
     const admin = await requireAdmin();
     if (!admin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -36,7 +43,7 @@ export async function GET(
   }
 
   try {
-    const buffer = await readDocumentFile(thumbnailKey(document.id, pageNumber));
+    const buffer = await readThumbnail(document.id, version, pageNumber);
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type": "image/png",

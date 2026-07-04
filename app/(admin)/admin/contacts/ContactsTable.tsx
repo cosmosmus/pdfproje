@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import type { GroupLabels } from "@/lib/group-labels";
 
@@ -13,6 +14,8 @@ export type ContactRow = {
   email: string;
   group: ContactGroup;
   firstSeen: string;
+  /** Kişinin izleme geçmişi sayfası (en son izlediği döküman üzerinden). */
+  statsHref?: string;
 };
 
 type FilterTab = "ALL" | "UNASSIGNED" | ContactGroup;
@@ -134,7 +137,17 @@ export default function ContactsTable({
                             assigned ? "bg-emerald-500" : "bg-red-400"
                           }`}
                         />
-                        <span className="font-medium text-ink">{row.email}</span>
+                        {row.statsHref ? (
+                          <Link
+                            href={row.statsHref}
+                            className="font-medium text-ink hover:text-signal transition-colors break-all"
+                            title="Bu kişinin izleme geçmişini gör"
+                          >
+                            {row.email}
+                          </Link>
+                        ) : (
+                          <span className="font-medium text-ink break-all">{row.email}</span>
+                        )}
                       </div>
                     </td>
 
@@ -192,7 +205,7 @@ export default function ContactsTable({
       </div>
 
       {/* Alt özet */}
-      <div className="pt-5 mt-2 border-t border-rule flex items-center gap-5">
+      <div className="pt-5 mt-2 border-t border-rule flex flex-wrap items-center gap-x-5 gap-y-1.5">
         <span className="text-sm font-medium text-ink/50">
           <span className="font-bold text-ink">{rows.length}</span> kişi toplam
         </span>

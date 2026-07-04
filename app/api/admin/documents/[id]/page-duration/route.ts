@@ -26,11 +26,29 @@ export async function GET(
   const rangeParam = (request.nextUrl.searchParams.get("range") ?? "all") as Range;
   const days = RANGES[rangeParam] ?? null;
 
+  const versionParam = request.nextUrl.searchParams.get("v");
+  const version = versionParam === null ? document.version : Number(versionParam);
+  if (!Number.isInteger(version) || version < 1 || version > document.version) {
+    return NextResponse.json({ error: "Geçersiz versiyon" }, { status: 400 });
+  }
+
+  // Old versions may have a different page count than the current PDF.
+  const pageCount =
+    version === document.version
+      ? document.pageCount
+      : (
+          await prisma.documentVersion.findUnique({
+            where: { documentId_version: { documentId: id, version } },
+            select: { pageCount: true },
+          })
+        )?.pageCount ?? document.pageCount;
+
   const cutoff = days ? new Date(Date.now() - days * 24 * 60 * 60 * 1000) : null;
 
   const events = await prisma.pageViewEvent.findMany({
     where: {
       documentId: id,
+      visit: { documentVersion: version },
       ...(cutoff ? { createdAt: { gte: cutoff } } : {}),
     },
     select: { pageNumber: true, durationMs: true },
@@ -41,7 +59,7 @@ export async function GET(
     pageTotals.set(e.pageNumber, (pageTotals.get(e.pageNumber) ?? 0) + e.durationMs);
   }
 
-  const data = Array.from({ length: document.pageCount }, (_, i) => {
+  const data = Array.from({ length: pageCount }, (_, i) => {
     const page = i + 1;
     return { page, seconds: Math.round((pageTotals.get(page) ?? 0) / 1000) };
   });

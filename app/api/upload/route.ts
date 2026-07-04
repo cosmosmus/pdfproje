@@ -68,6 +68,14 @@ export async function POST(request: NextRequest) {
       storageKey,
       pageCount,
       fileSizeBytes: buffer.byteLength,
+      versions: {
+        create: {
+          version: 1,
+          pageCount,
+          originalFilename: file.name,
+          fileSizeBytes: buffer.byteLength,
+        },
+      },
     },
   });
 
@@ -78,7 +86,7 @@ export async function POST(request: NextRequest) {
     let pageNumber = 0;
     for await (const pageBuffer of doc) {
       pageNumber += 1;
-      await saveDocumentFile(thumbnailKey(document.id, pageNumber), pageBuffer, "image/png");
+      await saveDocumentFile(thumbnailKey(document.id, 1, pageNumber), pageBuffer, "image/png");
     }
   } catch (err) {
     console.error("Thumbnail generation failed for document", document.id, err);

@@ -25,8 +25,10 @@ const MONTH_LABELS = [
 
 export default async function DocumentAnalyticsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ v?: string }>;
 }) {
   const admin = await requireAdmin();
   if (!admin) redirect("/admin/login");
@@ -35,8 +37,8 @@ export default async function DocumentAnalyticsPage({
   const document = await prisma.document.findUnique({ where: { id } });
   if (!document) notFound();
 
-  // Yalnızca kullanılan kolonları çek; iki bağımsız sorguyu paralel çalıştır.
-  const [events, visits] = await Promise.all([
+  // Yalnızca kullanılan kolonları çek; bağımsız sorguları paralel çalıştır.
+  const [events, visits, versions] = await Promise.all([
     prisma.pageViewEvent.findMany({
       where: { documentId: id },
       select: { durationMs: true, viewerSession: { select: { email: true } } },
@@ -49,12 +51,28 @@ export default async function DocumentAnalyticsPage({
         country: true,
         userAgent: true,
         ipAddress: true,
+        documentVersion: true,
         pageViewEvents: { select: { pageNumber: true, durationMs: true } },
         viewerSession: { select: { email: true } },
       },
       orderBy: { startedAt: "desc" },
     }),
+    prisma.documentVersion.findMany({
+      where: { documentId: id },
+      orderBy: { version: "asc" },
+      select: { version: true, pageCount: true, createdAt: true },
+    }),
   ]);
+
+  // Sayfa bazlı grafikler seçili PDF versiyonuna göre filtrelenir: eski PDF'in
+  // 5. sayfası ile yeni PDF'in 5. sayfası aynı içerik olmayabilir.
+  const { v: versionParam } = await searchParams;
+  const requestedVersion = versionParam ? Number(versionParam) : NaN;
+  const selectedVersion =
+    versions.find((ver) => ver.version === requestedVersion) ??
+    versions.find((ver) => ver.version === document.version) ??
+    { version: document.version, pageCount: document.pageCount, createdAt: document.createdAt };
+  const versionVisits = visits.filter((v) => v.documentVersion === selectedVersion.version);
 
   // Per-viewer (email) totals for the "who viewed how much" table.
   const totalsByViewer = new Map<string, number>();
@@ -66,17 +84,19 @@ export default async function DocumentAnalyticsPage({
   }
   const totalEngagementMs = events.reduce((sum: number, e) => sum + e.durationMs, 0);
 
-  // Drop-off: of all visits, what % reached at least page N (proxy: max page seen in that visit).
+  // Drop-off: of the selected version's visits, what % reached at least page N
+  // (proxy: max page seen in that visit).
   const totalVisits = visits.length;
-  const dropoffData = Array.from({ length: document.pageCount }, (_, i) => {
+  const versionVisitCount = versionVisits.length;
+  const dropoffData = Array.from({ length: selectedVersion.pageCount }, (_, i) => {
     const page = i + 1;
-    const reached = visits.filter((v) => {
+    const reached = versionVisits.filter((v) => {
       const maxPage = v.pageViewEvents.reduce((m, e) => Math.max(m, e.pageNumber), 0);
       return maxPage >= page;
     }).length;
     return {
       page,
-      percent: totalVisits === 0 ? 0 : Math.round((reached / totalVisits) * 1000) / 10,
+      percent: versionVisitCount === 0 ? 0 : Math.round((reached / versionVisitCount) * 1000) / 10,
       visitCount: reached,
     };
   });
@@ -119,6 +139,8 @@ export default async function DocumentAnalyticsPage({
     city: lookupCity(v.ipAddress),
     userAgent: v.userAgent,
     durationMs: v.pageViewEvents.reduce((sum, e) => sum + e.durationMs, 0),
+    documentId: id,
+    documentVersion: v.documentVersion,
   }));
 
   const uniqueViewers = totalsByViewer.size;
@@ -133,7 +155,7 @@ export default async function DocumentAnalyticsPage({
         <Breadcrumbs items={[{ label: "Panel", href: "/admin" }, { label: document.title }]} />
         <div className="flex items-start justify-between gap-6">
           <div className="flex-1">
-            <h1 className="font-display font-extrabold text-2xl tracking-tight mb-1">{document.title}</h1>
+            <h1 className="font-display font-extrabold text-2xl tracking-tight mb-1 break-words">{document.title}</h1>
             <p className="text-sm text-ink/60 mb-1">
               Toplam izlenme süresi:{" "}
               <span className="text-ember font-mono font-bold">
@@ -151,7 +173,7 @@ export default async function DocumentAnalyticsPage({
             </p>
           </div>
           <ThumbnailImage
-            src={`/api/documents/${document.slug}/thumbnail/1`}
+            src={`/api/documents/${document.slug}/thumbnail/1?v=${document.version}`}
             alt={`${document.title} kapak sayfası`}
             className="w-16 h-auto rounded-lg border border-rule shadow-sm shrink-0"
           />
@@ -170,9 +192,47 @@ export default async function DocumentAnalyticsPage({
         <RecentVisitsTable visits={recentVisits} bare />
       </section>
 
+      {versions.length > 1 && (
+        <section className="bg-surface rounded-[28px] px-6 py-4 md:px-8 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink/45">
+            PDF Versiyonu
+          </span>
+          <div className="flex flex-wrap gap-1">
+            {versions.map((ver) => (
+              <Link
+                key={ver.version}
+                href={
+                  ver.version === document.version
+                    ? `/admin/documents/${id}`
+                    : `/admin/documents/${id}?v=${ver.version}`
+                }
+                className={`px-3 py-1.5 rounded-md font-mono text-[11px] uppercase tracking-[0.08em] transition-colors ${
+                  ver.version === selectedVersion.version
+                    ? "bg-signal text-white"
+                    : "text-ink/50 hover:text-ink hover:bg-surface-muted"
+                }`}
+              >
+                v{ver.version}
+                {ver.version === document.version && " · güncel"}
+              </Link>
+            ))}
+          </div>
+          <span className="text-xs text-ink/40">
+            {selectedVersion.pageCount} sayfa ·{" "}
+            {selectedVersion.createdAt.toLocaleDateString("tr-TR")} ·{" "}
+            {versionVisitCount} ziyaret — aşağıdaki sayfa bazlı grafikler bu versiyona aittir
+          </span>
+        </section>
+      )}
+
       <section className="hover-lift bg-surface rounded-[28px] p-6 md:p-8">
         <SectionHeading>Sayfa Bazında İzlenme Süresi</SectionHeading>
-        <PageDurationChart documentId={id} documentSlug={document.slug} pageCount={document.pageCount} />
+        <PageDurationChart
+          documentId={id}
+          documentSlug={document.slug}
+          pageCount={selectedVersion.pageCount}
+          version={selectedVersion.version}
+        />
         <p className="text-xs text-ink/40 mt-3">
           Bir sütunun üzerine gelince o sayfanın görseli ve toplam saniyesi görünür.
         </p>
@@ -211,7 +271,7 @@ export default async function DocumentAnalyticsPage({
             <tbody>
               {Array.from(totalsByViewer.entries()).map(([email, ms]) => (
                 <tr key={email} className="group">
-                  <td className={`${cell} rounded-l-2xl font-medium`}>{email}</td>
+                  <td className={`${cell} rounded-l-2xl font-medium break-all`}>{email}</td>
                   <td className={`${cell} font-mono text-xs text-ember`}>{formatDuration(ms / 1000)}</td>
                   <td className={`${cell} rounded-r-2xl`}>
                     <Link

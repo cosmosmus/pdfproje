@@ -38,7 +38,6 @@ export default function StatsCards({
             }
           >
             <c.Icon className="w-5 h-5" />
-            {c.live && <span className="pulse-dot absolute -top-0.5 -right-0.5" title="Canlı" />}
           </span>
           <div>
             <p className="font-display font-extrabold text-2xl leading-none">{c.value}</p>

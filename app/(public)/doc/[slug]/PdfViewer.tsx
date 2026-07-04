@@ -39,6 +39,10 @@ export default function PdfViewer({
   locale?: "tr" | "en";
 }) {
   const [numPages, setNumPages] = useState(0);
+  // Sayfa genişliği viewport'a bağlı: telefonda döndürme/yeniden boyutlandırmada da güncellenir
+  const [pageWidth, setPageWidth] = useState(() =>
+    typeof window !== "undefined" ? Math.min(window.innerWidth - 32, 900) : 760
+  );
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const bufferRef = useRef<Entry[]>([]);
   const currentPageRef = useRef<number>(1);
@@ -113,6 +117,18 @@ export default function PdfViewer({
       }).catch(() => {});
     }
   }
+
+  useEffect(() => {
+    function onResize() {
+      setPageWidth(Math.min(window.innerWidth - 32, 900));
+    }
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+    };
+  }, []);
 
   useEffect(() => {
     const ratios = new Map<number, number>();
@@ -284,7 +300,7 @@ export default function PdfViewer({
                 pageNumber={pageNumber}
                 renderTextLayer={false}
                 renderAnnotationLayer={false}
-                width={Math.min(typeof window !== "undefined" ? window.innerWidth - 32 : 760, 900)}
+                width={pageWidth}
               />
             </div>
           ))}

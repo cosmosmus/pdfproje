@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-session";
-import { readDocumentFile } from "@/lib/storage";
-import { thumbnailKey } from "@/lib/thumbnails";
+import { prisma } from "@/lib/db";
+import { readThumbnail } from "@/lib/thumbnails";
 
 export async function GET(
   request: NextRequest,
@@ -18,8 +18,22 @@ export async function GET(
     return NextResponse.json({ error: "Invalid page" }, { status: 400 });
   }
 
+  const document = await prisma.document.findUnique({
+    where: { id },
+    select: { version: true },
+  });
+  if (!document) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const versionParam = request.nextUrl.searchParams.get("v");
+  const version = versionParam === null ? document.version : Number(versionParam);
+  if (!Number.isInteger(version) || version < 1 || version > document.version) {
+    return NextResponse.json({ error: "Invalid version" }, { status: 400 });
+  }
+
   try {
-    const buffer = await readDocumentFile(thumbnailKey(id, pageNumber));
+    const buffer = await readThumbnail(id, version, pageNumber);
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type": "image/png",

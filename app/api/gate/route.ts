@@ -35,6 +35,14 @@ export async function POST(request: NextRequest) {
     create: { documentId: document.id, email, expiresAt },
   });
 
+  // İlk kez görülen e-posta, Kişiler listesine varsayılan grupla
+  // (tanınmayan müşteri) düşer; mevcut kayıtların grubuna dokunulmaz.
+  await prisma.contact.upsert({
+    where: { email },
+    update: {},
+    create: { email },
+  });
+
   const token = await signGateToken({
     documentId: document.id,
     email,

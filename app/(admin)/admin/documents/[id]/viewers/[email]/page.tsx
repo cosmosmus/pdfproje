@@ -45,6 +45,7 @@ export default async function ViewerHistoryPage({
       userAgent: true,
       ipAddress: true,
       referrer: true,
+      documentVersion: true,
       pageViewEvents: { select: { pageNumber: true, durationMs: true, createdAt: true } },
     },
   });
@@ -88,7 +89,7 @@ export default async function ViewerHistoryPage({
             { label: email },
           ]}
         />
-        <h1 className="font-display font-extrabold text-2xl tracking-tight mb-1">{email}</h1>
+        <h1 className="font-display font-extrabold text-2xl tracking-tight mb-1 break-all">{email}</h1>
         <p className="text-xs text-ink/45">
           İlk görüntüleme:{" "}
           <span className="font-semibold text-ink">
@@ -132,6 +133,7 @@ export default async function ViewerHistoryPage({
             <thead>
               <tr className="text-left text-xs text-ink/40">
                 <th className="font-medium pb-2 pl-4">Tarih</th>
+                <th className="font-medium pb-2">Versiyon</th>
                 <th className="font-medium pb-2">Süre</th>
                 <th className="font-medium pb-2">Ülke</th>
                 <th className="font-medium pb-2">Cihaz</th>
@@ -148,6 +150,7 @@ export default async function ViewerHistoryPage({
                     <td className={`${cell} rounded-l-2xl font-mono text-xs text-ink/50 whitespace-nowrap`}>
                       {visit.startedAt.toLocaleString("tr-TR")}
                     </td>
+                    <td className={`${cell} font-mono text-xs text-ink/50`}>v{visit.documentVersion}</td>
                     <td className={`${cell} font-mono text-xs text-ember`}>{formatDuration(visitMs / 1000)}</td>
                     <td className={`${cell} whitespace-nowrap`} title={city ? "IP tabanlı tahmini konum" : undefined}>
                       {countryFlag(visit.country) && (
@@ -166,7 +169,7 @@ export default async function ViewerHistoryPage({
               })}
               {visits.length === 0 && (
                 <tr>
-                  <td className="p-4 text-ink/40" colSpan={6}>
+                  <td className="p-4 text-ink/40" colSpan={7}>
                     Henüz ziyaret yok.
                   </td>
                 </tr>

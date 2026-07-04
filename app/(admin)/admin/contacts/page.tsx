@@ -38,6 +38,8 @@ export default async function ContactsPage() {
         email: s.email,
         group: (groupMap.get(s.email) ?? "UNKNOWN_CUSTOMER") as ContactRow["group"],
         firstSeen: s.firstSeenAt.toISOString(),
+        // Sıralama firstSeenAt desc olduğundan bu, kişinin en son izlediği döküman.
+        statsHref: `/admin/documents/${s.documentId}/viewers/${encodeURIComponent(s.email)}`,
       });
     }
   }
