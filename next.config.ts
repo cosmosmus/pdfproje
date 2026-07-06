@@ -9,11 +9,13 @@ const nextConfig: NextConfig = {
   // Vercel'in dosya izlemesi (nft) @napi-rs/canvas'ın platforma özel .node
   // binary'sini (dinamik require ile yüklenir) kaçırıyor; thumbnail üreten
   // route'ların fonksiyon paketine elle dahil et.
+  // Anahtarlar picomatch ile eşleşir: [id] gibi segmentler kaçışlanmazsa
+  // karakter sınıfı sayılır ve route hiç eşleşmez.
   outputFileTracingIncludes: {
     "/api/upload": ["./node_modules/@napi-rs/canvas*/**"],
-    "/api/admin/documents/[id]/replace": ["./node_modules/@napi-rs/canvas*/**"],
-    "/api/admin/documents/[id]/thumbnail/[page]": ["./node_modules/@napi-rs/canvas*/**"],
-    "/api/documents/[slug]/thumbnail/[page]": ["./node_modules/@napi-rs/canvas*/**"],
+    "/api/admin/documents/\\[id\\]/replace": ["./node_modules/@napi-rs/canvas*/**"],
+    "/api/admin/documents/\\[id\\]/thumbnail/\\[page\\]": ["./node_modules/@napi-rs/canvas*/**"],
+    "/api/documents/\\[slug\\]/thumbnail/\\[page\\]": ["./node_modules/@napi-rs/canvas*/**"],
   },
   experimental: {
     serverActions: {
