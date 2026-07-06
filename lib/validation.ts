@@ -22,6 +22,11 @@ export const adminLoginSchema = z.object({
   password: z.string().min(1),
 });
 
+export const adminRegisterSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+
 export const adminProfileUpdateSchema = z.object({
   currentPassword: z.string().min(1),
   newEmail: z.string().email().optional(),
