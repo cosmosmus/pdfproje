@@ -94,8 +94,10 @@ export default function NewDocumentPage() {
         router.push("/admin");
         router.refresh();
       } else {
-        const body = JSON.parse(xhr.responseText || "{}");
-        setError(body.error ?? "Yükleme başarısız oldu");
+        // Platform error pages (e.g. Vercel 500) return HTML, not JSON.
+        let body: { error?: string } = {};
+        try { body = JSON.parse(xhr.responseText || "{}"); } catch {}
+        setError(body.error ?? `Yükleme başarısız oldu (HTTP ${xhr.status})`);
         setStage("idle");
       }
     });

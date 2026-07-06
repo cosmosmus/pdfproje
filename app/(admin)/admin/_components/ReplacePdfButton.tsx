@@ -89,14 +89,15 @@ export default function ReplacePdfButton({
     });
 
     xhr.addEventListener("load", () => {
+      // Platform error pages (e.g. Vercel 500) return HTML, not JSON.
+      let body: { error?: string; pageCount?: number; version?: number } = {};
+      try { body = JSON.parse(xhr.responseText || "{}"); } catch {}
       if (xhr.status >= 200 && xhr.status < 300) {
-        const body = JSON.parse(xhr.responseText || "{}");
-        setResult({ pageCount: body.pageCount, version: body.version });
+        setResult({ pageCount: body.pageCount ?? 0, version: body.version });
         setStage("done");
         router.refresh();
       } else {
-        const body = JSON.parse(xhr.responseText || "{}");
-        setError(body.error ?? "Güncelleme başarısız oldu");
+        setError(body.error ?? `Güncelleme başarısız oldu (HTTP ${xhr.status})`);
         setStage("error");
       }
     });
