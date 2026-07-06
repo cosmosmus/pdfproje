@@ -17,6 +17,7 @@ export async function generateThumbnails(
   // Lazy import: pdf-to-img pulls in pdfjs + native canvas, and a failure
   // there (e.g. missing platform binary) must not take the upload route down
   // with it — it should only surface here, inside the after() catch.
+  console.log("Thumbnail generation starting", documentId, `v${version}`);
   const { pdf } = await import("pdf-to-img");
   const doc = await pdf(buffer, { scale: THUMBNAIL_SCALE });
   const inFlight = new Set<Promise<void>>();
@@ -32,6 +33,7 @@ export async function generateThumbnails(
       if (inFlight.size >= SAVE_CONCURRENCY) await Promise.race(inFlight);
     }
     await Promise.all(inFlight);
+    console.log("Thumbnail generation finished", documentId, `v${version}`, pageNumber, "pages");
   } finally {
     await doc.destroy();
   }
@@ -59,5 +61,32 @@ export async function readThumbnail(
       return readDocumentFile(legacyThumbnailKey(documentId, pageNumber));
     }
     throw err;
+  }
+}
+
+/// readThumbnail with an on-demand fallback: if the pre-rendered PNG is
+/// missing (background generation interrupted or still running), render just
+/// that page from the stored PDF and cache it. Only possible for the current
+/// version — storage holds only the latest PDF, so past versions stay 404.
+export async function readOrGenerateThumbnail(
+  documentId: string,
+  version: number,
+  pageNumber: number,
+  opts: { storageKey: string; isCurrentVersion: boolean; pageCount: number }
+): Promise<Buffer> {
+  try {
+    return await readThumbnail(documentId, version, pageNumber);
+  } catch (err) {
+    if (!opts.isCurrentVersion || pageNumber > opts.pageCount) throw err;
+    const pdfBuffer = await readDocumentFile(opts.storageKey);
+    const { pdf } = await import("pdf-to-img");
+    const doc = await pdf(pdfBuffer, { scale: THUMBNAIL_SCALE });
+    try {
+      const png = await doc.getPage(pageNumber);
+      await saveDocumentFile(thumbnailKey(documentId, version, pageNumber), png, "image/png");
+      return png;
+    } finally {
+      await doc.destroy();
+    }
   }
 }

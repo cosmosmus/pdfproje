@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { readThumbnail } from "@/lib/thumbnails";
+import { readOrGenerateThumbnail } from "@/lib/thumbnails";
 import { gateCookieName, verifyGateToken } from "@/lib/auth";
 import { requireAdmin } from "@/lib/admin-session";
 
@@ -16,7 +16,7 @@ export async function GET(
 
   const document = await prisma.document.findUnique({
     where: { slug },
-    select: { id: true, version: true },
+    select: { id: true, version: true, storageKey: true, pageCount: true },
   });
   if (!document) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -43,7 +43,11 @@ export async function GET(
   }
 
   try {
-    const buffer = await readThumbnail(document.id, version, pageNumber);
+    const buffer = await readOrGenerateThumbnail(document.id, version, pageNumber, {
+      storageKey: document.storageKey,
+      isCurrentVersion: version === document.version,
+      pageCount: document.pageCount,
+    });
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type": "image/png",
@@ -51,7 +55,8 @@ export async function GET(
         "X-Content-Type-Options": "nosniff",
       },
     });
-  } catch {
+  } catch (err) {
+    console.error("Thumbnail unavailable", document.id, `v${version}`, pageNumber, err);
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 }

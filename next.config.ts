@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/upload": ["./node_modules/@napi-rs/canvas*/**"],
     "/api/admin/documents/[id]/replace": ["./node_modules/@napi-rs/canvas*/**"],
+    "/api/admin/documents/[id]/thumbnail/[page]": ["./node_modules/@napi-rs/canvas*/**"],
+    "/api/documents/[slug]/thumbnail/[page]": ["./node_modules/@napi-rs/canvas*/**"],
   },
   experimental: {
     serverActions: {
