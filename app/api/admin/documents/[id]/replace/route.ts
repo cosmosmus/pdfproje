@@ -1,12 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { PDFDocument } from "pdf-lib";
-import { pdf } from "pdf-to-img";
 import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import { saveDocumentFile } from "@/lib/storage";
-import { thumbnailKey } from "@/lib/thumbnails";
+import { generateThumbnails } from "@/lib/thumbnails";
 
-export const maxDuration = 120; // büyük PDF'lerde thumbnail üretimi uzun sürebilir
+export const maxDuration = 120; // büyük PDF'ler için timeout (after() içindeki thumbnail üretimi dahil)
 
 const MAX_PDF_SIZE_BYTES = 256 * 1024 * 1024; // 256MB
 
@@ -49,17 +48,15 @@ export async function POST(
   await saveDocumentFile(document.storageKey, buffer);
 
   // Old-version thumbnails stay in their own thumbnails/{id}/v{n}/ folder so the
-  // stats page can still show page previews for past versions.
-  try {
-    const thumbs = await pdf(buffer, { scale: 1 });
-    let pageNumber = 0;
-    for await (const pageBuffer of thumbs) {
-      pageNumber += 1;
-      await saveDocumentFile(thumbnailKey(document.id, newVersion, pageNumber), pageBuffer, "image/png");
+  // stats page can still show page previews for past versions. Generation runs
+  // after the response so a big PDF doesn't block the replace.
+  after(async () => {
+    try {
+      await generateThumbnails(document.id, newVersion, buffer);
+    } catch (err) {
+      console.error("Thumbnail regeneration failed for document", document.id, err);
     }
-  } catch (err) {
-    console.error("Thumbnail regeneration failed for document", document.id, err);
-  }
+  });
 
   const updated = await prisma.document.update({
     where: { id },

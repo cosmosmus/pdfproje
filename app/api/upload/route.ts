@@ -1,11 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { nanoid } from "nanoid";
 import { PDFDocument } from "pdf-lib";
-import { pdf } from "pdf-to-img";
 import { prisma } from "@/lib/db";
 import { saveDocumentFile } from "@/lib/storage";
 import { requireAdmin } from "@/lib/admin-session";
-import { thumbnailKey } from "@/lib/thumbnails";
+import { generateThumbnails } from "@/lib/thumbnails";
 
 export const maxDuration = 120; // büyük PDF'ler için timeout
 
@@ -80,17 +79,14 @@ export async function POST(request: NextRequest) {
   });
 
   // Best-effort: page thumbnails power the analytics chart hover preview.
-  // Don't fail the upload if rendering a handful of pages goes wrong.
-  try {
-    const doc = await pdf(buffer, { scale: 1 });
-    let pageNumber = 0;
-    for await (const pageBuffer of doc) {
-      pageNumber += 1;
-      await saveDocumentFile(thumbnailKey(document.id, 1, pageNumber), pageBuffer, "image/png");
+  // Generated after the response so a big PDF doesn't block the upload.
+  after(async () => {
+    try {
+      await generateThumbnails(document.id, 1, buffer);
+    } catch (err) {
+      console.error("Thumbnail generation failed for document", document.id, err);
     }
-  } catch (err) {
-    console.error("Thumbnail generation failed for document", document.id, err);
-  }
+  });
 
   return NextResponse.json({ id: document.id, slug: document.slug });
 }

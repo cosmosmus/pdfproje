@@ -158,7 +158,7 @@ export default function NewDocumentPage() {
               <StageRow
                 done={stage === "done"}
                 active={stage === "processing"}
-                label="Tüm sayfalar istatistikler için render ediliyor"
+                label="PDF kaydediliyor"
               />
               <StageRow
                 done={false}
@@ -169,7 +169,7 @@ export default function NewDocumentPage() {
 
             {stage === "processing" && (
               <p className="text-xs text-ink/40 text-center">
-                Sayfa sayısına göre bu 10–60 saniye sürebilir.
+                Sayfa önizlemeleri arka planda oluşturulur, birazdan istatistik sayfasında görünür.
               </p>
             )}
           </div>

@@ -218,14 +218,14 @@ export default function ReplacePdfButton({
                     <StageRow
                       done={false}
                       active={stage === "processing"}
-                      label="Sayfalar yeni versiyon için render ediliyor"
+                      label="PDF kaydediliyor"
                     />
                     <StageRow done={false} active={false} label="Tamamlandı" />
                   </div>
 
                   <p className="text-xs text-ink/40 text-center">
                     {stage === "processing"
-                      ? "Sayfa sayısına göre bu 10–60 saniye sürebilir. Pencereyi kapatmayın."
+                      ? "Sayfa önizlemeleri arka planda oluşturulur, birazdan istatistik sayfasında görünür."
                       : "Yükleme bitene kadar pencereyi kapatmayın."}
                   </p>
                 </div>
