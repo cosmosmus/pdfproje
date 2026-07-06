@@ -45,7 +45,16 @@ export async function POST(
 
   const newVersion = document.version + 1;
 
-  await saveDocumentFile(document.storageKey, buffer);
+  try {
+    await saveDocumentFile(document.storageKey, buffer);
+  } catch (err) {
+    console.error("PDF storage write failed", document.storageKey, err);
+    const detail = err instanceof Error ? err.message : String(err);
+    return NextResponse.json(
+      { error: `PDF depolamaya kaydedilemedi (${detail}). S3/R2 ayarlarını kontrol edin.` },
+      { status: 500 }
+    );
+  }
 
   // Old-version thumbnails stay in their own thumbnails/{id}/v{n}/ folder so the
   // stats page can still show page previews for past versions. Generation runs

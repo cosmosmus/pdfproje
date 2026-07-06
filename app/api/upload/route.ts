@@ -57,7 +57,16 @@ export async function POST(request: NextRequest) {
 
   const storageKey = `documents/${slug}.pdf`;
 
-  await saveDocumentFile(storageKey, buffer);
+  try {
+    await saveDocumentFile(storageKey, buffer);
+  } catch (err) {
+    console.error("PDF storage write failed", storageKey, err);
+    const detail = err instanceof Error ? err.message : String(err);
+    return NextResponse.json(
+      { error: `PDF depolamaya kaydedilemedi (${detail}). S3/R2 ayarlarını kontrol edin.` },
+      { status: 500 }
+    );
+  }
 
   const document = await prisma.document.create({
     data: {
