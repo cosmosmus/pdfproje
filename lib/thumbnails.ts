@@ -1,4 +1,3 @@
-import { pdf } from "pdf-to-img";
 import { readDocumentFile, saveDocumentFile } from "./storage";
 
 // Hover previews render small; ~400px wide is plenty even on retina.
@@ -15,6 +14,10 @@ export async function generateThumbnails(
   version: number,
   buffer: Buffer
 ): Promise<void> {
+  // Lazy import: pdf-to-img pulls in pdfjs + native canvas, and a failure
+  // there (e.g. missing platform binary) must not take the upload route down
+  // with it — it should only surface here, inside the after() catch.
+  const { pdf } = await import("pdf-to-img");
   const doc = await pdf(buffer, { scale: THUMBNAIL_SCALE });
   const inFlight = new Set<Promise<void>>();
   let pageNumber = 0;
