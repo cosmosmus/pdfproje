@@ -5,11 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { IconPdfFile, IconRefresh } from "./icons";
 import { StageRow, formatBytes } from "./UploadStages";
+import { replacePdf } from "@/lib/upload-client";
+import { MAX_PDF_SIZE_BYTES } from "@/lib/upload-limits";
 
 type Stage = "confirm" | "uploading" | "processing" | "done" | "error";
-
-// Sunucudaki limitle aynı tutulmalı (app/api/admin/documents/[id]/replace/route.ts)
-const MAX_PDF_SIZE_BYTES = 256 * 1024 * 1024;
 
 export default function ReplacePdfButton({
   documentId,
@@ -66,49 +65,38 @@ export default function ReplacePdfButton({
     setError(null);
   }
 
-  function startUpload() {
+  async function startUpload() {
     if (!file) return;
     setStage("uploading");
     setUploadPct(0);
     setError(null);
 
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const xhr = new XMLHttpRequest();
-
-    xhr.upload.addEventListener("progress", (ev) => {
-      if (ev.lengthComputable) {
-        setUploadPct(Math.round((ev.loaded / ev.total) * 100));
-      }
-    });
-
-    xhr.upload.addEventListener("load", () => {
-      setUploadPct(100);
-      setStage("processing");
-    });
-
-    xhr.addEventListener("load", () => {
-      // Platform error pages (e.g. Vercel 500) return HTML, not JSON.
-      let body: { error?: string; pageCount?: number; version?: number } = {};
-      try { body = JSON.parse(xhr.responseText || "{}"); } catch {}
-      if (xhr.status >= 200 && xhr.status < 300) {
-        setResult({ pageCount: body.pageCount ?? 0, version: body.version });
+    try {
+      const result = await replacePdf({
+        documentId,
+        file,
+        onProgress: setUploadPct,
+        onPhase: (phase) => setStage(phase),
+      });
+      if (result.ok) {
+        setResult({
+          pageCount: typeof result.body.pageCount === "number" ? result.body.pageCount : 0,
+          version: typeof result.body.version === "number" ? result.body.version : undefined,
+        });
         setStage("done");
         router.refresh();
       } else {
-        setError(body.error ?? `Güncelleme başarısız oldu (HTTP ${xhr.status})`);
+        setError(
+          typeof result.body.error === "string"
+            ? result.body.error
+            : `Güncelleme başarısız oldu (HTTP ${result.status})`
+        );
         setStage("error");
       }
-    });
-
-    xhr.addEventListener("error", () => {
+    } catch {
       setError("Ağ hatası oluştu, tekrar deneyin.");
       setStage("error");
-    });
-
-    xhr.open("POST", `/api/admin/documents/${documentId}/replace`);
-    xhr.send(formData);
+    }
   }
 
   return (
@@ -161,7 +149,7 @@ export default function ReplacePdfButton({
                 <div className="flex flex-col gap-5">
                   {tooLarge ? (
                     <p className="text-sm text-danger bg-danger/5 border border-danger/20 rounded-xl px-4 py-3">
-                      Bu dosya {formatBytes(file.size)} — PDF 256MB&apos;tan küçük olmalı.
+                      Bu dosya {formatBytes(file.size)} — PDF 200MB&apos;tan küçük olmalı.
                       Daha küçük bir dosya seçin.
                     </p>
                   ) : (

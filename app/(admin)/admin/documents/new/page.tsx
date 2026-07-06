@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Breadcrumbs from "../../_components/Breadcrumbs";
 import { IconUpload, IconPdfFile } from "../../_components/icons";
 import { StageRow, formatBytes } from "../../_components/UploadStages";
+import { uploadNewPdf } from "@/lib/upload-client";
 
 type Stage = "idle" | "uploading" | "processing" | "done";
 
@@ -61,54 +62,37 @@ export default function NewDocumentPage() {
     }
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!file) { setError("PDF dosyası seçin"); return; }
     setError(null);
     setStage("uploading");
     setUploadPct(0);
 
-    const finalSlug = slugifyFinal(slug);
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("title", title);
-    if (finalSlug) formData.append("slug", finalSlug);
-
-    const xhr = new XMLHttpRequest();
-
-    xhr.upload.addEventListener("progress", (ev) => {
-      if (ev.lengthComputable) {
-        setUploadPct(Math.round((ev.loaded / ev.total) * 100));
-      }
-    });
-
-    xhr.upload.addEventListener("load", () => {
-      setUploadPct(100);
-      setStage("processing");
-    });
-
-    xhr.addEventListener("load", () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
+    try {
+      const result = await uploadNewPdf({
+        file,
+        title,
+        slug: slugifyFinal(slug) || undefined,
+        onProgress: setUploadPct,
+        onPhase: (phase) => setStage(phase),
+      });
+      if (result.ok) {
         setStage("done");
         router.push("/admin");
         router.refresh();
       } else {
-        // Platform error pages (e.g. Vercel 500) return HTML, not JSON.
-        let body: { error?: string } = {};
-        try { body = JSON.parse(xhr.responseText || "{}"); } catch {}
-        setError(body.error ?? `Yükleme başarısız oldu (HTTP ${xhr.status})`);
+        setError(
+          typeof result.body.error === "string"
+            ? result.body.error
+            : `Yükleme başarısız oldu (HTTP ${result.status})`
+        );
         setStage("idle");
       }
-    });
-
-    xhr.addEventListener("error", () => {
+    } catch {
       setError("Ağ hatası oluştu, tekrar deneyin.");
       setStage("idle");
-    });
-
-    xhr.open("POST", "/api/upload");
-    xhr.send(formData);
+    }
   }
 
   const isLoading = stage !== "idle";

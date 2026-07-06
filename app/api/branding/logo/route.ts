@@ -3,7 +3,10 @@ import { prisma } from "@/lib/db";
 import { readDocumentFile } from "@/lib/storage";
 
 export async function GET() {
+  // Birden fazla hesap varsa logosu gerçekten olan hesabı seç.
   const admin = await prisma.adminUser.findFirst({
+    where: { logoStorageKey: { not: null } },
+    orderBy: { updatedAt: "desc" },
     select: { logoStorageKey: true, logoContentType: true },
   });
 
