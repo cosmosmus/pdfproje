@@ -1,5 +1,13 @@
 import type { NextConfig } from "next";
 
+const PDF_RENDER_TRACE_INCLUDES = [
+  "./node_modules/@napi-rs/canvas*/**",
+  "./node_modules/pdfjs-dist/legacy/build/**",
+  "./node_modules/pdfjs-dist/cmaps/**",
+  "./node_modules/pdfjs-dist/standard_fonts/**",
+  "./node_modules/pdfjs-dist/package.json",
+];
+
 const nextConfig: NextConfig = {
   // geoip-lite reads .dat files relative to its own __dirname at runtime;
   // bundling it breaks that path resolution, so keep it as a native require.
@@ -11,11 +19,13 @@ const nextConfig: NextConfig = {
   // route'ların fonksiyon paketine elle dahil et.
   // Anahtarlar picomatch ile eşleşir: [id] gibi segmentler kaçışlanmazsa
   // karakter sınıfı sayılır ve route hiç eşleşmez.
+  // pdfjs-dist worker'ını dinamik import ile yüklediğinden nft onu göremiyor;
+  // cmaps/standard_fonts da bazı PDF'ler için çalışma anında gerekiyor.
   outputFileTracingIncludes: {
-    "/api/upload": ["./node_modules/@napi-rs/canvas*/**"],
-    "/api/admin/documents/\\[id\\]/replace": ["./node_modules/@napi-rs/canvas*/**"],
-    "/api/admin/documents/\\[id\\]/thumbnail/\\[page\\]": ["./node_modules/@napi-rs/canvas*/**"],
-    "/api/documents/\\[slug\\]/thumbnail/\\[page\\]": ["./node_modules/@napi-rs/canvas*/**"],
+    "/api/upload": PDF_RENDER_TRACE_INCLUDES,
+    "/api/admin/documents/\\[id\\]/replace": PDF_RENDER_TRACE_INCLUDES,
+    "/api/admin/documents/\\[id\\]/thumbnail/\\[page\\]": PDF_RENDER_TRACE_INCLUDES,
+    "/api/documents/\\[slug\\]/thumbnail/\\[page\\]": PDF_RENDER_TRACE_INCLUDES,
   },
   experimental: {
     serverActions: {
