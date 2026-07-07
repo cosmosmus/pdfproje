@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { nanoid } from "nanoid";
 import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/mailer";
 import { getMailFrom } from "@/lib/resend";
+import { saveDocumentFile } from "@/lib/storage";
 
 export const maxDuration = 60;
 
@@ -75,9 +77,24 @@ export async function POST(request: NextRequest) {
     ? `<img src="${logoUrl}" alt="${escapeHtml(companyName)}" height="40" style="height:40px;max-width:200px;display:block;margin:0 auto" />`
     : `<p style="margin:0;font-size:15px;font-weight:700;color:#20232b;letter-spacing:0.04em">${escapeHtml(companyName)}</p>`;
 
-  const imageHtml = imageBase64
-    ? `<div style="margin:24px 0"><img src="${imageBase64}" alt="" style="max-width:100%;border-radius:8px" /></div>`
-    : "";
+  // Gmail base64 (data URI) gömülü görselleri hiç göstermez; görseli
+  // depolamaya kaydedip normal URL ile referans veriyoruz.
+  let imageHtml = "";
+  if (imageBase64) {
+    const match = imageBase64.match(/^data:image\/(png|jpeg|webp|gif);base64,([\s\S]+)$/);
+    if (match) {
+      const ext = match[1] === "jpeg" ? "jpg" : match[1];
+      const key = `mail-assets/${nanoid(16)}.${ext}`;
+      try {
+        await saveDocumentFile(key, Buffer.from(match[2], "base64"), `image/${match[1]}`);
+        const imageUrl = `${request.nextUrl.origin}/api/mail-assets/${key.split("/")[1]}`;
+        imageHtml = `<div style="margin:24px 0"><img src="${imageUrl}" alt="" style="max-width:100%;border-radius:8px" /></div>`;
+      } catch (err) {
+        console.error("Mail görseli depolamaya kaydedilemedi", err);
+        return NextResponse.json({ error: "Görsel kaydedilemedi, tekrar deneyin" }, { status: 500 });
+      }
+    }
+  }
 
   const linkHtml = docLink
     ? `<div style="margin:32px 0;text-align:center">
