@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { trackRequestSchema } from "@/lib/validation";
 import { gateCookieName, verifyGateToken } from "@/lib/auth";
-import { getClientIp, lookupGeo } from "@/lib/geo";
+import { getClientIp, lookupGeoLive } from "@/lib/geo";
 import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
@@ -38,17 +38,23 @@ export async function POST(request: NextRequest) {
   }
 
   const ip = getClientIp(request.headers);
-  const { country, city, latitude, longitude } = lookupGeo(ip);
   const userAgent = request.headers.get("user-agent");
 
   // A visit id may only be reused by the session that created it.
   const existingVisit = await prisma.visit.findUnique({
     where: { id: visitId },
-    select: { viewerSessionId: true },
+    select: { viewerSessionId: true, country: true, city: true, latitude: true, longitude: true },
   });
   if (existingVisit && existingVisit.viewerSessionId !== gate.sid) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
+
+  // Geolocate once per visit (a viewer sends a new batch every ~7s while the
+  // tab is open) — reuse what was already stored instead of re-querying the
+  // live geo service on every flush.
+  const { country, city, latitude, longitude } = existingVisit
+    ? existingVisit
+    : await lookupGeoLive(ip);
 
   await prisma.visit.upsert({
     where: { id: visitId },

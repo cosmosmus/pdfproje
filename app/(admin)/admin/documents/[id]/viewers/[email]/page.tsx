@@ -12,7 +12,6 @@ const ViewerPageChart = dynamic(() => import("./ViewerPageChart"), {
   loading: () => <div className="h-[260px] animate-pulse bg-surface-muted rounded-xl" />,
 });
 import { formatDuration } from "@/lib/format-duration";
-import { lookupCity } from "@/lib/geo";
 import { countryFlag } from "@/lib/country-flag";
 
 const WINDOWS_DAYS = [7, 30, 90] as const;
@@ -142,7 +141,7 @@ export default async function ViewerHistoryPage({
             <tbody>
               {visits.map((visit) => {
                 const visitMs = visit.pageViewEvents.reduce((sum, e) => sum + e.durationMs, 0);
-                const city = lookupCity(visit.ipAddress);
+                const city = visit.city;
                 return (
                   <tr key={visit.id} className="group">
                     <td className={`${cell} rounded-l-2xl font-mono text-xs text-ink/50 whitespace-nowrap`}>

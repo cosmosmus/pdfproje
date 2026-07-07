@@ -4,7 +4,6 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import { aggregateCountryData } from "@/lib/country-data";
-import { lookupCity } from "@/lib/geo";
 import dynamic from "next/dynamic";
 import StatsCards from "./_components/StatsCards";
 import CountryMapLoader from "./_components/CountryMapLoader";
@@ -104,7 +103,7 @@ export default async function AdminDashboardPage() {
     startedAt: v.startedAt,
     email: v.viewerSession.email,
     country: v.country,
-    city: lookupCity(v.ipAddress),
+    city: v.city,
     userAgent: v.userAgent,
     durationMs: v.pageViewEvents.reduce((sum, e) => sum + e.durationMs, 0),
     documentTitle: v.document.title,

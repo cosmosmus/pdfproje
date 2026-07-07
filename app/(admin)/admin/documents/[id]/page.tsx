@@ -18,7 +18,6 @@ import Breadcrumbs from "../../_components/Breadcrumbs";
 import SectionHeading from "../../_components/SectionHeading";
 import ThumbnailImage from "../../_components/ThumbnailImage";
 import { formatDuration } from "@/lib/format-duration";
-import { lookupCity } from "@/lib/geo";
 import { countryFlag } from "@/lib/country-flag";
 
 const MONTH_LABELS = [
@@ -135,7 +134,7 @@ export default async function DocumentAnalyticsPage({
     startedAt: v.startedAt,
     email: v.viewerSession.email,
     country: v.country,
-    city: lookupCity(v.ipAddress),
+    city: v.city,
     userAgent: v.userAgent,
     durationMs: v.pageViewEvents.reduce((sum, e) => sum + e.durationMs, 0),
     documentId: id,
