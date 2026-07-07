@@ -19,6 +19,7 @@ import SectionHeading from "../../_components/SectionHeading";
 import ThumbnailImage from "../../_components/ThumbnailImage";
 import { formatDuration } from "@/lib/format-duration";
 import { lookupCity } from "@/lib/geo";
+import { countryFlag } from "@/lib/country-flag";
 
 const MONTH_LABELS = [
   "Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara",
@@ -141,6 +142,19 @@ export default async function DocumentAnalyticsPage({
     documentVersion: v.documentVersion,
   }));
 
+  // Görüntüleyen bazında versiyon ve ülke kırılımı (ziyaretlerden).
+  const viewerInfo = new Map<string, { countries: Set<string>; versions: Set<number> }>();
+  for (const v of visits) {
+    const email = v.viewerSession.email;
+    let info = viewerInfo.get(email);
+    if (!info) {
+      info = { countries: new Set(), versions: new Set() };
+      viewerInfo.set(email, info);
+    }
+    if (v.country) info.countries.add(v.country);
+    info.versions.add(v.documentVersion);
+  }
+
   const uniqueViewers = totalsByViewer.size;
   const avgVisitSeconds =
     totalVisits === 0 ? 0 : Math.round(totalEngagementMs / 1000 / totalVisits);
@@ -258,32 +272,54 @@ export default async function DocumentAnalyticsPage({
       <section className="bg-surface rounded-[28px] p-6 md:p-8">
         <SectionHeading>Görüntüleyen Bazında Toplam</SectionHeading>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm border-separate border-spacing-y-1.5">
+          <table className="w-full text-sm min-w-[640px] border-separate border-spacing-y-1.5">
             <thead>
               <tr className="text-left text-xs text-ink/40">
                 <th className="font-medium pb-2 pl-4">E-posta</th>
                 <th className="font-medium pb-2">Toplam Süre</th>
+                <th className="font-medium pb-2">Versiyon</th>
+                <th className="font-medium pb-2">Ülke</th>
                 <th className="pb-2"></th>
               </tr>
             </thead>
             <tbody>
-              {Array.from(totalsByViewer.entries()).map(([email, ms]) => (
-                <tr key={email} className="group">
-                  <td className={`${cell} rounded-l-2xl font-medium break-all`}>{email}</td>
-                  <td className={`${cell} font-mono text-xs text-ember`}>{formatDuration(ms / 1000)}</td>
-                  <td className={`${cell} rounded-r-2xl`}>
-                    <Link
-                      href={`/admin/documents/${id}/viewers/${encodeURIComponent(email)}`}
-                      className="text-signal-dim hover:text-signal transition-colors text-xs font-semibold"
-                    >
-                      Geçmişi gör →
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+              {Array.from(totalsByViewer.entries()).map(([email, ms]) => {
+                const info = viewerInfo.get(email);
+                const versions = info ? Array.from(info.versions).sort((a, b) => a - b) : [];
+                const countries = info ? Array.from(info.countries) : [];
+                return (
+                  <tr key={email} className="group">
+                    <td className={`${cell} rounded-l-2xl font-medium break-all`}>{email}</td>
+                    <td className={`${cell} font-mono text-xs text-ember`}>{formatDuration(ms / 1000)}</td>
+                    <td className={`${cell} font-mono text-xs text-ink/50 whitespace-nowrap`}>
+                      {versions.length > 0 ? versions.map((ver) => `v${ver}`).join(", ") : "—"}
+                    </td>
+                    <td className={`${cell} whitespace-nowrap`}>
+                      {countries.length > 0
+                        ? countries.map((code) => (
+                            <span key={code} className="mr-2 text-xs text-ink/60">
+                              {countryFlag(code) && (
+                                <span className="mr-1 text-base leading-none align-middle">{countryFlag(code)}</span>
+                              )}
+                              {code}
+                            </span>
+                          ))
+                        : "—"}
+                    </td>
+                    <td className={`${cell} rounded-r-2xl`}>
+                      <Link
+                        href={`/admin/documents/${id}/viewers/${encodeURIComponent(email)}`}
+                        className="text-signal-dim hover:text-signal transition-colors text-xs font-semibold"
+                      >
+                        Geçmişi gör →
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
               {totalsByViewer.size === 0 && (
                 <tr>
-                  <td className="p-4 text-ink/40" colSpan={3}>
+                  <td className="p-4 text-ink/40" colSpan={5}>
                     Henüz görüntüleme yok.
                   </td>
                 </tr>

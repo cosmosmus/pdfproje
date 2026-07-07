@@ -283,7 +283,11 @@ export default function PdfViewer({
           onLoadSuccess={({ numPages: n }) => setNumPages(n)}
           loading={
             <div className="flex items-center justify-center h-64">
-              <p className="text-white/30 font-mono text-sm animate-pulse">Yükleniyor...</p>
+              <span
+                role="status"
+                aria-label="Loading"
+                className="w-10 h-10 rounded-full border-[3px] border-white/15 border-t-white/70 animate-spin"
+              />
             </div>
           }
         >
