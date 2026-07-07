@@ -13,6 +13,7 @@ const ViewerPageChart = dynamic(() => import("./ViewerPageChart"), {
 });
 import { formatDuration } from "@/lib/format-duration";
 import { countryFlagUrl } from "@/lib/country-flag";
+import CountryFlagImg from "../../../../_components/CountryFlagImg";
 
 const WINDOWS_DAYS = [7, 30, 90] as const;
 
@@ -152,13 +153,7 @@ export default async function ViewerHistoryPage({
                     <td className={`${cell} whitespace-nowrap`} title={city ? "IP tabanlı tahmini konum" : undefined}>
                       <span className="inline-flex items-center gap-1.5">
                         {countryFlagUrl(visit.country) && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={countryFlagUrl(visit.country)!}
-                            alt=""
-                            className="w-4 h-3 rounded-[2px] object-cover shrink-0"
-                            onError={(e) => { e.currentTarget.style.display = "none"; }}
-                          />
+                          <CountryFlagImg src={countryFlagUrl(visit.country)!} className="w-4 h-3 rounded-[2px] object-cover shrink-0" />
                         )}
                         {visit.country ?? "—"}
                         {city && <span className="text-ink/40 text-xs"> · {city}</span>}

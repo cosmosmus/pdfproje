@@ -19,6 +19,7 @@ import SectionHeading from "../../_components/SectionHeading";
 import ThumbnailImage from "../../_components/ThumbnailImage";
 import { formatDuration } from "@/lib/format-duration";
 import { countryFlagUrl } from "@/lib/country-flag";
+import CountryFlagImg from "../../_components/CountryFlagImg";
 
 const MONTH_LABELS = [
   "Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara",
@@ -298,13 +299,7 @@ export default async function DocumentAnalyticsPage({
                         ? countries.map((code) => (
                             <span key={code} className="mr-2 text-xs text-ink/60 inline-flex items-center gap-1">
                               {countryFlagUrl(code) && (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={countryFlagUrl(code)!}
-                                  alt=""
-                                  className="w-4 h-3 rounded-[2px] object-cover shrink-0"
-                                  onError={(e) => { e.currentTarget.style.display = "none"; }}
-                                />
+                                <CountryFlagImg src={countryFlagUrl(code)!} className="w-4 h-3 rounded-[2px] object-cover shrink-0" />
                               )}
                               {code}
                             </span>

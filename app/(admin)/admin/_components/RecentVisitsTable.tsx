@@ -2,6 +2,7 @@ import Link from "next/link";
 import { describeUserAgent } from "@/lib/user-agent";
 import { formatDuration } from "@/lib/format-duration";
 import { countryFlagUrl } from "@/lib/country-flag";
+import CountryFlagImg from "./CountryFlagImg";
 
 type VisitRow = {
   id: string;
@@ -79,13 +80,7 @@ export default function RecentVisitsTable({ visits, bare = false }: { visits: Vi
               <td className={`${cell} text-ink/60 whitespace-nowrap`} title={v.city ? "IP tabanlı tahmini konum" : undefined}>
                 <span className="inline-flex items-center gap-1.5">
                   {countryFlagUrl(v.country) && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={countryFlagUrl(v.country)!}
-                      alt=""
-                      className="w-4 h-3 rounded-[2px] object-cover shrink-0"
-                      onError={(e) => { e.currentTarget.style.display = "none"; }}
-                    />
+                    <CountryFlagImg src={countryFlagUrl(v.country)!} className="w-4 h-3 rounded-[2px] object-cover shrink-0" />
                   )}
                   {v.country ?? "—"}
                   {v.city && <span className="text-ink/40 text-xs"> · {v.city}</span>}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { countryFlagUrl } from "@/lib/country-flag";
+import CountryFlagImg from "./CountryFlagImg";
 import { IconEye } from "./icons";
 
 const POLL_INTERVAL_MS = 15_000;
@@ -100,13 +101,7 @@ export default function LiveVisitors() {
               )}
               <span className="text-xs text-ink/45 whitespace-nowrap ml-auto flex items-center gap-1">
                 {countryFlagUrl(v.country) && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={countryFlagUrl(v.country)!}
-                    alt=""
-                    className="w-4 h-3 rounded-[2px] object-cover shrink-0"
-                    onError={(e) => { e.currentTarget.style.display = "none"; }}
-                  />
+                  <CountryFlagImg src={countryFlagUrl(v.country)!} className="w-4 h-3 rounded-[2px] object-cover shrink-0" />
                 )}
                 {elapsedLabel(v.startedAt)}
               </span>
