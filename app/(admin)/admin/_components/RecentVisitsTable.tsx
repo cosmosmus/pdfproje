@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { describeUserAgent } from "@/lib/user-agent";
 import { formatDuration } from "@/lib/format-duration";
-import { countryFlag } from "@/lib/country-flag";
+import { countryFlagUrl } from "@/lib/country-flag";
 
 type VisitRow = {
   id: string;
@@ -77,11 +77,19 @@ export default function RecentVisitsTable({ visits, bare = false }: { visits: Vi
               )}
               <td className={`${cell} font-mono text-xs text-ember`}>{formatDuration(v.durationMs / 1000)}</td>
               <td className={`${cell} text-ink/60 whitespace-nowrap`} title={v.city ? "IP tabanlı tahmini konum" : undefined}>
-                {countryFlag(v.country) && (
-                  <span className="mr-1.5 text-base leading-none align-middle">{countryFlag(v.country)}</span>
-                )}
-                {v.country ?? "—"}
-                {v.city && <span className="text-ink/40 text-xs"> · {v.city}</span>}
+                <span className="inline-flex items-center gap-1.5">
+                  {countryFlagUrl(v.country) && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={countryFlagUrl(v.country)!}
+                      alt=""
+                      className="w-4 h-3 rounded-[2px] object-cover shrink-0"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    />
+                  )}
+                  {v.country ?? "—"}
+                  {v.city && <span className="text-ink/40 text-xs"> · {v.city}</span>}
+                </span>
               </td>
               <td className={`${cell} rounded-r-2xl text-ink/40 text-xs`}>{describeUserAgent(v.userAgent)}</td>
             </tr>

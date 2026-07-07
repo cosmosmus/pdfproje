@@ -12,7 +12,7 @@ const ViewerPageChart = dynamic(() => import("./ViewerPageChart"), {
   loading: () => <div className="h-[260px] animate-pulse bg-surface-muted rounded-xl" />,
 });
 import { formatDuration } from "@/lib/format-duration";
-import { countryFlag } from "@/lib/country-flag";
+import { countryFlagUrl } from "@/lib/country-flag";
 
 const WINDOWS_DAYS = [7, 30, 90] as const;
 
@@ -150,11 +150,19 @@ export default async function ViewerHistoryPage({
                     <td className={`${cell} font-mono text-xs text-ink/50`}>v{visit.documentVersion}</td>
                     <td className={`${cell} font-mono text-xs text-ember`}>{formatDuration(visitMs / 1000)}</td>
                     <td className={`${cell} whitespace-nowrap`} title={city ? "IP tabanlı tahmini konum" : undefined}>
-                      {countryFlag(visit.country) && (
-                        <span className="mr-1.5 text-base leading-none align-middle">{countryFlag(visit.country)}</span>
-                      )}
-                      {visit.country ?? "—"}
-                      {city && <span className="text-ink/40 text-xs"> · {city}</span>}
+                      <span className="inline-flex items-center gap-1.5">
+                        {countryFlagUrl(visit.country) && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={countryFlagUrl(visit.country)!}
+                            alt=""
+                            className="w-4 h-3 rounded-[2px] object-cover shrink-0"
+                            onError={(e) => { e.currentTarget.style.display = "none"; }}
+                          />
+                        )}
+                        {visit.country ?? "—"}
+                        {city && <span className="text-ink/40 text-xs"> · {city}</span>}
+                      </span>
                     </td>
                     <td className={`${cell} text-ink/50 text-xs`}>{describeUserAgent(visit.userAgent)}</td>
                     <td className={`${cell} font-mono text-xs text-ink/40`}>{visit.ipAddress ?? "—"}</td>

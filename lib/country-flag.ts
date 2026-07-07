@@ -1,10 +1,11 @@
-/** Converts an ISO 3166-1 alpha-2 country code (e.g. "TR") to its emoji flag (🇹🇷), or null if invalid. */
-export function countryFlag(code: string | null): string | null {
+/**
+ * Static SVG flag path for an ISO 3166-1 alpha-2 country code, or null if
+ * invalid. Uses bundled SVGs (public/flags/, copied from country-flag-icons
+ * at install time) instead of emoji flags — many platforms (notably Windows)
+ * don't render flag emoji as flags, only as two separate letter tiles, which
+ * next to the plain-text country code looked like the code was shown twice.
+ */
+export function countryFlagUrl(code: string | null): string | null {
   if (!code || !/^[A-Za-z]{2}$/.test(code)) return null;
-  return String.fromCodePoint(
-    ...code
-      .toUpperCase()
-      .split("")
-      .map((c) => 0x1f1e6 + c.charCodeAt(0) - 65)
-  );
+  return `/flags/${code.toUpperCase()}.svg`;
 }
