@@ -8,12 +8,17 @@ pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 const FLUSH_INTERVAL_MS = 7_000;
 const MAX_DURATION_MS = 120_000;
 
-// Görünen sayfanın etrafında bu kadar sayfa render edilir; bir kez render
-// edilen sayfa bellekte kalır (geri kaydırınca yeniden çizilmez).
-const RENDER_AHEAD = 6;
+// Yalnızca görünen sayfanın çevresindeki pencere bellekte tutulur; pencereden
+// çıkan sayfalar iskelete geri döner. Aksi halde uzun dökümanlarda biriken
+// canvas'lar mobil tarayıcının bellek sınırını aşıyor ve tarayıcı sayfayı
+// kendiliğinden yeniliyor (1. sayfaya atma şikâyetinin nedeni).
+const RENDER_AHEAD = 5;
 const RENDER_BEHIND = 3;
 // Sayfa boyutu öğrenilene kadar placeholder yüksekliği için A4 oranı.
 const DEFAULT_ASPECT_RATIO = 1.414;
+// Retina/telefonda 3x canvas, 2x'e göre ~2.25 kat bellek tüketir ve görsel
+// fark gözle seçilemez; bellek kaynaklı sayfa yenilenmesini önlemek için 2x.
+const MAX_DEVICE_PIXEL_RATIO = 2;
 
 type Entry = { page: number; durationMs: number };
 
@@ -50,12 +55,19 @@ export default function PdfViewer({
   const [pageWidth, setPageWidth] = useState(() =>
     typeof window !== "undefined" ? Math.min(window.innerWidth - 32, 900) : 760
   );
-  // Kademeli render: yalnızca görünen sayfanın çevresindeki pencere çizilir,
-  // çizilenler sette kalır. İlk yüklemede baştaki sayfalar hemen gelir,
-  // gerisi kaydırdıkça (veya pdf.js arka planda indirdikçe) eklenir.
+  // Kademeli render: yalnızca görünen sayfanın çevresindeki pencere çizili
+  // durur. İlk yüklemede baştaki sayfalar hemen gelir, kaydırdıkça pencere
+  // ilerler, geride kalanlar gerçek yükseklikli iskelete döner.
   const [renderWindowCenter, setRenderWindowCenter] = useState(1);
-  const renderedPagesRef = useRef<Set<number>>(new Set());
   const [aspectRatio, setAspectRatio] = useState(DEFAULT_ASPECT_RATIO);
+  // Sayfa başına ölçülen en/boy oranı: iskelet, sayfanın gerçek yüksekliğini
+  // birebir korur ki render↔iskelet geçişinde scroll kayması olmasın.
+  const pageRatiosRef = useRef<Map<number, number>>(new Map());
+  const [devicePixelRatio] = useState(() =>
+    typeof window !== "undefined"
+      ? Math.min(window.devicePixelRatio || 1, MAX_DEVICE_PIXEL_RATIO)
+      : 1
+  );
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const bufferRef = useRef<Entry[]>([]);
   const currentPageRef = useRef<number>(1);
@@ -306,11 +318,10 @@ export default function PdfViewer({
           }
         >
           {Array.from({ length: numPages }, (_, i) => i + 1).map((pageNumber) => {
-            const inWindow =
+            const shouldRender =
               pageNumber >= renderWindowCenter - RENDER_BEHIND &&
               pageNumber <= renderWindowCenter + RENDER_AHEAD;
-            if (inWindow) renderedPagesRef.current.add(pageNumber);
-            const shouldRender = renderedPagesRef.current.has(pageNumber);
+            const ratio = pageRatiosRef.current.get(pageNumber) ?? aspectRatio;
             return (
               <div
                 key={pageNumber}
@@ -326,19 +337,21 @@ export default function PdfViewer({
                     renderTextLayer={false}
                     renderAnnotationLayer={false}
                     width={pageWidth}
+                    devicePixelRatio={devicePixelRatio}
                     onLoadSuccess={(page) => {
-                      const ratio = page.height / page.width;
-                      if (pageNumber === 1 && Number.isFinite(ratio) && ratio > 0) {
-                        setAspectRatio(ratio);
+                      const r = page.height / page.width;
+                      if (Number.isFinite(r) && r > 0) {
+                        pageRatiosRef.current.set(pageNumber, r);
+                        if (pageNumber === 1) setAspectRatio(r);
                       }
                     }}
                   />
                 ) : (
-                  // Henüz render edilmemiş sayfa: gerçek boyutlu iskelet —
-                  // scroll yüksekliği sabit kalır, görünüme yaklaşınca çizilir.
+                  // Pencere dışındaki sayfa: gerçek yükseklikli iskelet —
+                  // scroll konumu oynamaz, görünüme yaklaşınca yeniden çizilir.
                   <div
                     className="bg-white/5 flex items-center justify-center"
-                    style={{ width: pageWidth, height: Math.round(pageWidth * aspectRatio) }}
+                    style={{ width: pageWidth, height: Math.round(pageWidth * ratio) }}
                   >
                     <span className="font-mono text-xs text-white/20">{pageNumber}</span>
                   </div>
