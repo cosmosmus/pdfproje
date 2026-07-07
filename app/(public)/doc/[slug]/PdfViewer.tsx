@@ -8,6 +8,13 @@ pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 const FLUSH_INTERVAL_MS = 7_000;
 const MAX_DURATION_MS = 120_000;
 
+// Görünen sayfanın etrafında bu kadar sayfa render edilir; bir kez render
+// edilen sayfa bellekte kalır (geri kaydırınca yeniden çizilmez).
+const RENDER_AHEAD = 6;
+const RENDER_BEHIND = 3;
+// Sayfa boyutu öğrenilene kadar placeholder yüksekliği için A4 oranı.
+const DEFAULT_ASPECT_RATIO = 1.414;
+
 type Entry = { page: number; durationMs: number };
 
 type ContactInfo = {
@@ -43,6 +50,12 @@ export default function PdfViewer({
   const [pageWidth, setPageWidth] = useState(() =>
     typeof window !== "undefined" ? Math.min(window.innerWidth - 32, 900) : 760
   );
+  // Kademeli render: yalnızca görünen sayfanın çevresindeki pencere çizilir,
+  // çizilenler sette kalır. İlk yüklemede baştaki sayfalar hemen gelir,
+  // gerisi kaydırdıkça (veya pdf.js arka planda indirdikçe) eklenir.
+  const [renderWindowCenter, setRenderWindowCenter] = useState(1);
+  const renderedPagesRef = useRef<Set<number>>(new Set());
+  const [aspectRatio, setAspectRatio] = useState(DEFAULT_ASPECT_RATIO);
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const bufferRef = useRef<Entry[]>([]);
   const currentPageRef = useRef<number>(1);
@@ -148,6 +161,7 @@ export default function PdfViewer({
         }
         if (mostVisible && mostVisible.ratio > 0) {
           bumpCurrentPage(mostVisible.page);
+          setRenderWindowCenter(mostVisible.page);
         }
       },
       { threshold: [0, 0.25, 0.5, 0.75, 1] }
@@ -291,23 +305,47 @@ export default function PdfViewer({
             </div>
           }
         >
-          {Array.from({ length: numPages }, (_, i) => i + 1).map((pageNumber) => (
-            <div
-              key={pageNumber}
-              data-page-number={pageNumber}
-              ref={(el) => {
-                if (el) pageRefs.current.set(pageNumber, el);
-              }}
-              className="shadow-2xl shadow-black/50 mb-8 last:mb-0"
-            >
-              <Page
-                pageNumber={pageNumber}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-                width={pageWidth}
-              />
-            </div>
-          ))}
+          {Array.from({ length: numPages }, (_, i) => i + 1).map((pageNumber) => {
+            const inWindow =
+              pageNumber >= renderWindowCenter - RENDER_BEHIND &&
+              pageNumber <= renderWindowCenter + RENDER_AHEAD;
+            if (inWindow) renderedPagesRef.current.add(pageNumber);
+            const shouldRender = renderedPagesRef.current.has(pageNumber);
+            return (
+              <div
+                key={pageNumber}
+                data-page-number={pageNumber}
+                ref={(el) => {
+                  if (el) pageRefs.current.set(pageNumber, el);
+                }}
+                className="shadow-2xl shadow-black/50 mb-8 last:mb-0"
+              >
+                {shouldRender ? (
+                  <Page
+                    pageNumber={pageNumber}
+                    renderTextLayer={false}
+                    renderAnnotationLayer={false}
+                    width={pageWidth}
+                    onLoadSuccess={(page) => {
+                      const ratio = page.height / page.width;
+                      if (pageNumber === 1 && Number.isFinite(ratio) && ratio > 0) {
+                        setAspectRatio(ratio);
+                      }
+                    }}
+                  />
+                ) : (
+                  // Henüz render edilmemiş sayfa: gerçek boyutlu iskelet —
+                  // scroll yüksekliği sabit kalır, görünüme yaklaşınca çizilir.
+                  <div
+                    className="bg-white/5 flex items-center justify-center"
+                    style={{ width: pageWidth, height: Math.round(pageWidth * aspectRatio) }}
+                  >
+                    <span className="font-mono text-xs text-white/20">{pageNumber}</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </Document>
       </div>
 

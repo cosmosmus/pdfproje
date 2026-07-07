@@ -2,6 +2,7 @@ import { cookies, headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { gateCookieName, verifyGateToken } from "@/lib/auth";
+import { isS3Configured, presignDownloadUrl } from "@/lib/storage";
 import EmailGateForm from "./EmailGateForm";
 import PdfViewerLoader from "./PdfViewerLoader";
 
@@ -52,12 +53,19 @@ export default async function PublicDocumentPage({
     );
   }
 
+  // S3/R2 modunda PDF doğrudan bucket'tan, Range destekli iner (hızlı ilk
+  // sayfa); yerel disk modunda API route'una düşer. URL kısa ömürlü ve
+  // yalnızca gate'i geçen ziyaretçiye üretiliyor.
+  const fileUrl = isS3Configured()
+    ? await presignDownloadUrl(document.storageKey)
+    : `/api/documents/${slug}/file`;
+
   return (
     <PdfViewerLoader
       slug={slug}
       title={document.title}
       pageCount={document.pageCount}
-      fileUrl={`/api/documents/${slug}/file`}
+      fileUrl={fileUrl}
       lastUpdated={document.updatedAt.toLocaleDateString(locale === "tr" ? "tr-TR" : "en-GB")}
       contact={admin}
       locale={locale}

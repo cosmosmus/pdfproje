@@ -71,6 +71,28 @@ export async function presignUploadUrl(
   );
 }
 
+/**
+ * Presigned GET URL: viewer PDF'i lambda'ya uğramadan doğrudan R2'den,
+ * HTTP Range destekli çeker — pdf.js ilk sayfayı tüm dosya inmeden basar.
+ * Kısa ömürlü (varsayılan 15 dk) ve yalnızca gate kontrolünden geçmiş
+ * ziyaretçiye üretilir.
+ */
+export async function presignDownloadUrl(
+  key: string,
+  expiresInSeconds = 900
+): Promise<string> {
+  return getSignedUrl(
+    s3Client(),
+    new GetObjectCommand({
+      Bucket: process.env.S3_BUCKET,
+      Key: key,
+      ResponseContentType: "application/pdf",
+      ResponseContentDisposition: "inline",
+    }),
+    { expiresIn: expiresInSeconds }
+  );
+}
+
 /** Returns the object's size in bytes, or null if it doesn't exist. */
 export async function statDocumentFile(key: string): Promise<number | null> {
   if (isS3Configured()) {
