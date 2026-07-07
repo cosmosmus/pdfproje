@@ -95,8 +95,17 @@ export default async function AdminDashboardPage() {
     return { month: `${MONTH_LABELS[d.getMonth()]} ${d.getFullYear()}`, visits: monthVisits.length, seconds };
   });
 
-  // Country aggregation across all documents.
-  const countryData = aggregateCountryData(visits);
+  // Country aggregation across all documents. Harita "kaç farklı kişi baktı"
+  // göstersin diye kişi başına en son ziyarete indirgeniyor — aynı kişinin
+  // tekrar ziyaretleri (visits zaten en yeniden eskiye sıralı) pini şişirmesin.
+  const seenEmailsForMap = new Set<string>();
+  const uniqueVisitorLocations = visits.filter((v) => {
+    const email = v.viewerSession.email;
+    if (seenEmailsForMap.has(email)) return false;
+    seenEmailsForMap.add(email);
+    return true;
+  });
+  const countryData = aggregateCountryData(uniqueVisitorLocations);
 
   const recentVisits = visits.slice(0, 5).map((v) => ({
     id: v.id,

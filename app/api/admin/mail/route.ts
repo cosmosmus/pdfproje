@@ -20,6 +20,7 @@ const schema = z.object({
     .optional(),
   docLink: z.string().url().max(500).startsWith("http").optional(),
   docTitle: z.string().max(200).optional(),
+  plain: z.boolean().optional(),
 });
 
 function escapeHtml(value: string): string {
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
         : "Geçersiz bilgi";
     return NextResponse.json({ error: msg }, { status: 400 });
   }
-  const { to, subject, text, imageBase64, docLink, docTitle } = parsed.data;
+  const { to, subject, text, imageBase64, docLink, docTitle, plain } = parsed.data;
 
   const adminUser = await prisma.adminUser.findUnique({
     where: { email: admin },
@@ -110,7 +111,32 @@ export async function POST(request: NextRequest) {
       </div>`
     : "";
 
-  const html = `<!DOCTYPE html>
+  // "Sade görünüm": logo/kart/renkli buton yok, düz metin bir mektup gibi
+  // görünür. Gmail'in "bu bir kampanya" sinyali için baktığı en güçlü
+  // ipuçları (marka görseli, belirgin CTA butonu, kart tasarımı) kalktığı
+  // için Tanıtımlar sekmesine düşme ihtimali azalır — garanti değildir,
+  // sınıflandırma tamamen Gmail'e ait.
+  const plainLinkHtml = docLink
+    ? `<p style="margin:20px 0 0"><a href="${escapeHtml(docLink)}" style="color:#20232b">${escapeHtml(docTitle ?? "View document")}</a></p>`
+    : "";
+
+  const html = plain
+    ? `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#20232b;font-size:15px;line-height:1.7">
+  <div style="max-width:520px;margin:0 auto">
+    ${escapedText}
+    ${imageHtml}
+    ${plainLinkHtml}
+    <p style="margin:32px 0 0;font-size:12px;color:#9ca3af">
+      — ${escapeHtml(companyName)}<br>
+      <a href="mailto:${unsubscribeAddress}?subject=Unsubscribe" style="color:#9ca3af">Unsubscribe</a>
+    </p>
+  </div>
+</body>
+</html>`
+    : `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f6f7f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">

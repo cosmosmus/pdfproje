@@ -127,8 +127,17 @@ export default async function DocumentAnalyticsPage({
     };
   });
 
-  // Country aggregation (by visit, not by event, so one visit = one count regardless of page count).
-  const countryData = aggregateCountryData(visits);
+  // Country aggregation: kişi başına en son ziyarete indirgenir (visits en
+  // yeniden eskiye sıralı) ki aynı kişinin tekrar ziyaretleri pini şişirmesin
+  // — harita "kaç farklı kişi baktı" gösterir, "kaç kere bakıldı" değil.
+  const seenEmailsForMap = new Set<string>();
+  const uniqueVisitorLocations = visits.filter((v) => {
+    const email = v.viewerSession.email;
+    if (seenEmailsForMap.has(email)) return false;
+    seenEmailsForMap.add(email);
+    return true;
+  });
+  const countryData = aggregateCountryData(uniqueVisitorLocations);
 
   const recentVisits = visits.slice(0, 5).map((v) => ({
     id: v.id,

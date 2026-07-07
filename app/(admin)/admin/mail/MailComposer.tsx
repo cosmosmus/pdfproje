@@ -37,6 +37,7 @@ export default function MailComposer({
   const [subject, setSubject] = useState("");
   const [text, setText] = useState("");
   const [linkDocId, setLinkDocId] = useState("");
+  const [plain, setPlain] = useState(false);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [imageFilename, setImageFilename] = useState<string | null>(null);
   const [sendStatus, setSendStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
@@ -115,6 +116,7 @@ export default function MailComposer({
           imageBase64: imageBase64 ?? undefined,
           docLink: docLink ?? undefined,
           docTitle: selectedDoc?.title ?? undefined,
+          plain,
         }),
       });
       const data = await res.json();
@@ -267,6 +269,21 @@ export default function MailComposer({
           </div>
           <input ref={imageRef} type="file" accept="image/*" onChange={handleImage} className="hidden" />
         </div>
+
+        {/* Sade görünüm */}
+        <label className="flex items-start gap-2.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={plain}
+            onChange={(e) => setPlain(e.target.checked)}
+            className="accent-signal mt-0.5 shrink-0"
+          />
+          <span className="text-xs text-ink/60">
+            <span className="font-medium text-ink/80">Sade görünüm</span> — logo, kart ve buton olmadan düz metin
+            gönderir. Gmail'de "Tanıtımlar" sekmesine düşme ihtimalini azaltır (garanti etmez), kişisel bir mesaj
+            gibi görünür.
+          </span>
+        </label>
 
         {/* Gönder */}
         <div className="flex flex-wrap items-center gap-4 pt-1">
