@@ -45,6 +45,12 @@ export async function POST(request: NextRequest) {
         ? "Konu boş olamaz (en fazla 200 karakter)"
         : first?.path[0] === "text"
         ? "Mesaj boş olamaz (en fazla 10.000 karakter)"
+        : first?.path[0] === "imageBase64"
+        ? first.code === "too_big"
+          ? "Görsel çok büyük, en fazla ~2MB olmalı"
+          : "Desteklenmeyen görsel formatı: PNG, JPEG, WEBP veya GIF kullanın (HEIC/HEIF gibi formatlar desteklenmiyor)"
+        : first?.path[0] === "docLink"
+        ? "Geçersiz döküman linki"
         : "Geçersiz bilgi";
     return NextResponse.json({ error: msg }, { status: 400 });
   }

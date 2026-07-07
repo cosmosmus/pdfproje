@@ -70,9 +70,23 @@ export default function MailComposer({
     });
   }
 
+  // Sunucudaki (app/api/admin/mail/route.ts) sınırlarla aynı tutulmalı.
+  const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+  const MAX_IMAGE_BYTES = 2_000_000; // ~2MB ham dosya; base64'e çevrilince ~%37 büyür
+
   function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      alert("Desteklenmeyen görsel formatı. PNG, JPEG, WEBP veya GIF seçin (HEIC/HEIF gibi formatlar desteklenmiyor — iPhone'da \"En Uyumlu\" format ayarını kullanın).");
+      if (imageRef.current) imageRef.current.value = "";
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      alert(`Görsel çok büyük (${(file.size / 1_000_000).toFixed(1)}MB). En fazla 2MB olmalı.`);
+      if (imageRef.current) imageRef.current.value = "";
+      return;
+    }
     setImageFilename(file.name);
     const reader = new FileReader();
     reader.onload = () => setImageBase64(reader.result as string);
