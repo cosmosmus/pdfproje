@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
-import { getResend, getMailFrom } from "@/lib/resend";
+import { sendEmail } from "@/lib/mailer";
 
 export const maxDuration = 60;
 
@@ -100,31 +100,34 @@ export async function POST(request: NextRequest) {
 </body>
 </html>`;
 
-  const resend = getResend();
-  const from = getMailFrom();
-
-  const BATCH = 50;
+  // Alıcı başına ayrı gönderim: sendEmail önce Resend'i dener, gerekirse
+  // SMTP'ye düşer. Paralellik sınırlı tutuluyor (SMTP sunucuları ve Resend
+  // rate limitleri için).
+  const CONCURRENCY = 5;
   let sent = 0;
   let failed = 0;
 
-  for (let i = 0; i < to.length; i += BATCH) {
-    const chunk = to.slice(i, i + BATCH);
-    const messages = chunk.map((email) => ({
-      from,
-      to: [email],
-      reply_to: replyTo,
-      subject,
-      html,
-      headers: {
-        "List-Unsubscribe": `<mailto:${replyTo}?subject=Abonelikten%20%C3%A7%C4%B1k>`,
-      },
-    }));
-
-    try {
-      await resend.batch.send(messages);
-      sent += chunk.length;
-    } catch {
-      failed += chunk.length;
+  for (let i = 0; i < to.length; i += CONCURRENCY) {
+    const chunk = to.slice(i, i + CONCURRENCY);
+    const results = await Promise.allSettled(
+      chunk.map((email) =>
+        sendEmail({
+          to: email,
+          subject,
+          html,
+          replyTo,
+          headers: {
+            "List-Unsubscribe": `<mailto:${replyTo}?subject=Abonelikten%20%C3%A7%C4%B1k>`,
+          },
+        })
+      )
+    );
+    for (const r of results) {
+      if (r.status === "fulfilled") sent += 1;
+      else {
+        failed += 1;
+        console.error("Toplu mail gönderimi başarısız:", r.reason);
+      }
     }
   }
 

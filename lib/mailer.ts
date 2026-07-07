@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import { getResend, getMailFrom } from "./resend";
 
-function isSmtpConfigured(): boolean {
+export function isSmtpConfigured(): boolean {
   return Boolean(
     process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD
   );
@@ -23,6 +23,58 @@ function transporter() {
   });
 }
 
+export interface OutgoingEmail {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  replyTo?: string;
+  headers?: Record<string, string>;
+}
+
+/**
+ * Tek bir e-posta gönderir. Önce Resend denenir; Resend yapılandırılmamışsa
+ * ya da (örn. domain doğrulaması eksikse) hata verirse Hostinger SMTP'ye
+ * düşer. İkisi de yoksa/başarısızsa hata fırlatır.
+ */
+export async function sendEmail(mail: OutgoingEmail): Promise<void> {
+  let resendError: Error | null = null;
+
+  if (isResendConfigured()) {
+    try {
+      const { error } = await getResend().emails.send({
+        from: getMailFrom(),
+        to: mail.to,
+        subject: mail.subject,
+        text: mail.text,
+        html: mail.html,
+        replyTo: mail.replyTo,
+        headers: mail.headers,
+      });
+      if (!error) return;
+      resendError = new Error(`Resend: ${error.message}`);
+    } catch (err) {
+      resendError = err instanceof Error ? err : new Error(String(err));
+    }
+  }
+
+  if (isSmtpConfigured()) {
+    if (resendError) console.warn("Resend başarısız, SMTP'ye düşülüyor:", resendError.message);
+    await transporter().sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: mail.to,
+      subject: mail.subject,
+      text: mail.text,
+      html: mail.html,
+      replyTo: mail.replyTo,
+      headers: mail.headers,
+    });
+    return;
+  }
+
+  throw resendError ?? new Error("RESEND_API_KEY veya SMTP_HOST/SMTP_USER/SMTP_PASSWORD tanımlı değil");
+}
+
 export async function sendDocumentLinkEmail({
   to,
   documentTitle,
@@ -32,35 +84,10 @@ export async function sendDocumentLinkEmail({
   documentTitle: string;
   link: string;
 }): Promise<void> {
-  const subject = `${documentTitle} - Döküman Linki`;
-  const text = `Merhaba,\n\n"${documentTitle}" dökümanını görüntülemek için aşağıdaki linke tıklayabilirsiniz:\n\n${link}\n\nİyi günler.`;
-  const html = `<p>Merhaba,</p><p><strong>${documentTitle}</strong> dökümanını görüntülemek için aşağıdaki linke tıklayabilirsiniz:</p><p><a href="${link}">${link}</a></p><p>İyi günler.</p>`;
-
-  // Toplu mail tarafıyla aynı servis: Resend. SMTP yalnızca Resend
-  // yapılandırılmamışsa denenir (eski kurulumlar için).
-  if (isResendConfigured()) {
-    const { error } = await getResend().emails.send({
-      from: getMailFrom(),
-      to,
-      subject,
-      text,
-      html,
-    });
-    if (error) throw new Error(`Resend: ${error.message}`);
-    return;
-  }
-
-  if (!isSmtpConfigured()) {
-    throw new Error("RESEND_API_KEY (veya SMTP_HOST/SMTP_USER/SMTP_PASSWORD) tanımlı değil");
-  }
-
-  await transporter().sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+  await sendEmail({
     to,
-    subject,
-    text,
-    html,
+    subject: `${documentTitle} - Döküman Linki`,
+    text: `Merhaba,\n\n"${documentTitle}" dökümanını görüntülemek için aşağıdaki linke tıklayabilirsiniz:\n\n${link}\n\nİyi günler.`,
+    html: `<p>Merhaba,</p><p><strong>${documentTitle}</strong> dökümanını görüntülemek için aşağıdaki linke tıklayabilirsiniz:</p><p><a href="${link}">${link}</a></p><p>İyi günler.</p>`,
   });
 }
-
-export { isSmtpConfigured };
