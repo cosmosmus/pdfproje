@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/mailer";
+import { getMailFrom } from "@/lib/resend";
 
 export const maxDuration = 60;
 
@@ -52,7 +53,10 @@ export async function POST(request: NextRequest) {
     select: { companyName: true, contactEmail: true },
   });
   const companyName = adminUser?.companyName ?? "Vitrin";
-  const replyTo = adminUser?.contactEmail ?? admin;
+  // Yanıtlar ve abonelik çıkışları gönderen kutusuna (MAIL_FROM) düşer;
+  // ayrı bir reply-to koymuyoruz ki alıcı tarafında beklenmedik bir adres
+  // görünmesin (kullanıcı isteği: info@... alıcıda görünmesin).
+  const unsubscribeAddress = getMailFrom();
 
   const escapedText = text
     .replace(/&/g, "&amp;")
@@ -91,7 +95,7 @@ export async function POST(request: NextRequest) {
         <tr><td style="padding:24px 40px 32px;border-top:1px solid #edf0ef;margin-top:24px">
           <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.6">
             Bu maili ${escapeHtml(companyName)} aracılığıyla aldınız.<br>
-            Almak istemiyorsanız <a href="mailto:${replyTo}?subject=Abonelikten%20%C3%A7%C4%B1k" style="color:#6b7280">buraya tıklayın</a>.
+            Almak istemiyorsanız <a href="mailto:${unsubscribeAddress}?subject=Abonelikten%20%C3%A7%C4%B1k" style="color:#6b7280">buraya tıklayın</a>.
           </p>
         </td></tr>
       </table>
@@ -115,9 +119,9 @@ export async function POST(request: NextRequest) {
           to: email,
           subject,
           html,
-          replyTo,
+          fromName: companyName,
           headers: {
-            "List-Unsubscribe": `<mailto:${replyTo}?subject=Abonelikten%20%C3%A7%C4%B1k>`,
+            "List-Unsubscribe": `<mailto:${unsubscribeAddress}?subject=Abonelikten%20%C3%A7%C4%B1k>`,
           },
         })
       )

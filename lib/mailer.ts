@@ -28,8 +28,17 @@ export interface OutgoingEmail {
   subject: string;
   html: string;
   text?: string;
+  /// Gönderen görünen adı, örn. "Decosit" → "Decosit <send@...>".
+  fromName?: string;
   replyTo?: string;
   headers?: Record<string, string>;
+}
+
+function formatFrom(address: string, fromName?: string): string {
+  if (!fromName) return address;
+  // Görünen addaki tırnak/köşeli karakterleri temizle (header injection önlemi).
+  const safe = fromName.replace(/["<>\r\n]/g, "").trim();
+  return safe ? `${safe} <${address}>` : address;
 }
 
 /**
@@ -43,7 +52,7 @@ export async function sendEmail(mail: OutgoingEmail): Promise<void> {
   if (isResendConfigured()) {
     try {
       const { error } = await getResend().emails.send({
-        from: getMailFrom(),
+        from: formatFrom(getMailFrom(), mail.fromName),
         to: mail.to,
         subject: mail.subject,
         text: mail.text,
@@ -61,7 +70,7 @@ export async function sendEmail(mail: OutgoingEmail): Promise<void> {
   if (isSmtpConfigured()) {
     if (resendError) console.warn("Resend başarısız, SMTP'ye düşülüyor:", resendError.message);
     await transporter().sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      from: formatFrom(process.env.SMTP_FROM || process.env.SMTP_USER!, mail.fromName),
       to: mail.to,
       subject: mail.subject,
       text: mail.text,
