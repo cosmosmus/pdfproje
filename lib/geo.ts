@@ -14,6 +14,27 @@ export function lookupCity(ip: string | null): string | null {
   return result?.city || null;
 }
 
+export interface GeoInfo {
+  country: string | null;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+/** Tek geoip sorgusuyla ülke + şehir + koordinat döner (harita pinleri için). */
+export function lookupGeo(ip: string | null): GeoInfo {
+  const empty: GeoInfo = { country: null, city: null, latitude: null, longitude: null };
+  if (!ip) return empty;
+  const result = geoip.lookup(ip);
+  if (!result) return empty;
+  return {
+    country: result.country ?? null,
+    city: result.city || null,
+    latitude: result.ll?.[0] ?? null,
+    longitude: result.ll?.[1] ?? null,
+  };
+}
+
 /** Extracts the originating client IP from a Next.js Request, honoring x-forwarded-for. */
 export function getClientIp(headers: Headers): string | null {
   const forwardedFor = headers.get("x-forwarded-for");

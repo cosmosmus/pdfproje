@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
+import { aggregateCountryData } from "@/lib/country-data";
 import { describeUserAgent } from "@/lib/user-agent";
 import CountryMapLoader from "../../../../_components/CountryMapLoader";
 import Breadcrumbs from "../../../../_components/Breadcrumbs";
@@ -42,6 +43,9 @@ export default async function ViewerHistoryPage({
       id: true,
       startedAt: true,
       country: true,
+      city: true,
+      latitude: true,
+      longitude: true,
       userAgent: true,
       ipAddress: true,
       referrer: true,
@@ -69,13 +73,7 @@ export default async function ViewerHistoryPage({
     .sort((a, b) => a[0] - b[0])
     .map(([page, ms]) => ({ page, seconds: Math.round(ms / 1000) }));
 
-  const countryCounts = new Map<string, number>();
-  for (const visit of visits) {
-    if (visit.country) {
-      countryCounts.set(visit.country, (countryCounts.get(visit.country) ?? 0) + 1);
-    }
-  }
-  const countryData = Array.from(countryCounts.entries()).map(([code, count]) => ({ code, count }));
+  const countryData = aggregateCountryData(visits);
 
   const cell = "bg-shell/60 group-hover:bg-surface-muted transition-colors p-4";
 

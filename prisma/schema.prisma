@@ -95,6 +95,10 @@ model Visit {
   userAgent       String?
   referrer        String?
   country         String?
+  /// GeoIP'den gelen tahmini şehir ve koordinatlar (harita pinleri için).
+  city            String?
+  latitude        Float?
+  longitude       Float?
   startedAt       DateTime        @default(now())
   lastEventAt     DateTime        @default(now())
   pageViewEvents  PageViewEvent[]

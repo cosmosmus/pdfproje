@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
+import { aggregateCountryData } from "@/lib/country-data";
 import dynamic from "next/dynamic";
 import CountryMapLoader from "../../_components/CountryMapLoader";
 
@@ -49,6 +50,9 @@ export default async function DocumentAnalyticsPage({
         id: true,
         startedAt: true,
         country: true,
+        city: true,
+        latitude: true,
+        longitude: true,
         userAgent: true,
         ipAddress: true,
         documentVersion: true,
@@ -123,13 +127,7 @@ export default async function DocumentAnalyticsPage({
   });
 
   // Country aggregation (by visit, not by event, so one visit = one count regardless of page count).
-  const countryCounts = new Map<string, number>();
-  for (const visit of visits) {
-    if (visit.country) {
-      countryCounts.set(visit.country, (countryCounts.get(visit.country) ?? 0) + 1);
-    }
-  }
-  const countryData = Array.from(countryCounts.entries()).map(([code, count]) => ({ code, count }));
+  const countryData = aggregateCountryData(visits);
 
   const recentVisits = visits.slice(0, 5).map((v) => ({
     id: v.id,

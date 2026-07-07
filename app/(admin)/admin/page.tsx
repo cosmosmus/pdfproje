@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
+import { aggregateCountryData } from "@/lib/country-data";
 import { lookupCity } from "@/lib/geo";
 import dynamic from "next/dynamic";
 import StatsCards from "./_components/StatsCards";
@@ -40,6 +41,9 @@ export default async function AdminDashboardPage() {
         id: true,
         startedAt: true,
         country: true,
+        city: true,
+        latitude: true,
+        longitude: true,
         userAgent: true,
         ipAddress: true,
         pageViewEvents: { select: { durationMs: true } },
@@ -93,11 +97,7 @@ export default async function AdminDashboardPage() {
   });
 
   // Country aggregation across all documents.
-  const countryCounts = new Map<string, number>();
-  for (const v of visits) {
-    if (v.country) countryCounts.set(v.country, (countryCounts.get(v.country) ?? 0) + 1);
-  }
-  const countryData = Array.from(countryCounts.entries()).map(([code, count]) => ({ code, count }));
+  const countryData = aggregateCountryData(visits);
 
   const recentVisits = visits.slice(0, 5).map((v) => ({
     id: v.id,

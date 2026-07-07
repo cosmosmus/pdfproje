@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { trackRequestSchema } from "@/lib/validation";
 import { gateCookieName, verifyGateToken } from "@/lib/auth";
-import { getClientIp, lookupCountry } from "@/lib/geo";
+import { getClientIp, lookupGeo } from "@/lib/geo";
 import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   }
 
   const ip = getClientIp(request.headers);
-  const country = lookupCountry(ip);
+  const { country, city, latitude, longitude } = lookupGeo(ip);
   const userAgent = request.headers.get("user-agent");
 
   // A visit id may only be reused by the session that created it.
@@ -61,6 +61,9 @@ export async function POST(request: NextRequest) {
       userAgent,
       referrer,
       country,
+      city,
+      latitude,
+      longitude,
     },
     update: { lastEventAt: new Date() },
   });
