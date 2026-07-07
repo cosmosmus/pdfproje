@@ -139,18 +139,6 @@ function Callout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function FaqItem({ q, a }: { q: string; a: React.ReactNode }) {
-  return (
-    <details className="group bg-surface rounded-2xl px-5 py-4 [&_summary::-webkit-details-marker]:hidden open:bg-surface-muted/60 transition-colors">
-      <summary className="flex items-center justify-between gap-4 cursor-pointer list-none font-display font-bold text-[0.9rem] text-ink">
-        {q}
-        <IconChevron className="w-4 h-4 text-ink/30 shrink-0 transition-transform group-open:rotate-90" />
-      </summary>
-      <div className="mt-3 text-sm text-ink/65 leading-relaxed">{a}</div>
-    </details>
-  );
-}
-
 // ————————————————————————————————————————————————————————————
 // Sayfa
 // ————————————————————————————————————————————————————————————
@@ -161,12 +149,36 @@ export default async function GuidePage() {
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
+      {/* Özet: bu sistem ne işe yarar */}
+      <section className="hover-lift bg-ink text-surface rounded-[28px] p-6 md:p-8">
+        <p className="font-mono text-xs font-medium text-ember tracking-[0.14em] uppercase mb-3">Vitrin nedir</p>
+        <h1 className="font-display font-extrabold text-2xl md:text-[1.75rem] tracking-tight mb-3 max-w-[560px]">
+          PDF&apos;ini paylaş, kimin gerçekten okuduğunu gör
+        </h1>
+        <p className="text-sm text-surface/65 leading-relaxed max-w-[600px] mb-6">
+          Vitrin bir katalog paylaşım ve okuyucu takip paneli. Bir PDF yüklüyorsun, tek bir link
+          üretiliyor; o linki açan herkesin e-postasını, hangi sayfada ne kadar durduğunu, tahmini
+          nereden baktığını ve ne zaman geri döndüğünü panelden görüyorsun. Aşağıdaki altı durak
+          bu sürecin tamamını, adım adım anlatıyor.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {["Link ile paylaş", "Sayfa bazlı okuma süresi", "Kim, nereden, ne zaman", "Canlı izleyiciler"].map((t) => (
+            <span
+              key={t}
+              className="font-mono text-[11px] text-surface/70 bg-surface/10 border border-surface/15 rounded-full px-3 py-1.5"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+      </section>
+
       {/* Hero: belgenin yolculuğu */}
       <section className="hover-lift bg-surface rounded-[28px] p-6 md:p-8">
         <p className="font-mono text-xs font-medium text-ember tracking-[0.14em] uppercase mb-2">Panel Rehberi</p>
-        <h1 className="font-display font-extrabold text-2xl md:text-[1.75rem] tracking-tight text-ink mb-2">
+        <h2 className="font-display font-extrabold text-2xl md:text-[1.75rem] tracking-tight text-ink mb-2">
           Bir belgenin panelde izlediği yol
-        </h1>
+        </h2>
         <p className="text-sm text-ink/55 leading-relaxed max-w-[560px] mb-7">
           Bir PDF, senin bilgisayarından bir okuyucunun ekranına giderken altı duraktan geçer. Her durak,
           panelde bir bölüme karşılık gelir — aşağıda birine tıkla, o bölüme atlarsın.
@@ -320,132 +332,6 @@ export default async function GuidePage() {
           istatistikleri görür</strong>. Küçük, birbirine güvenen bir ekip için tasarlandı.
         </p>
       </Section>
-
-      {/* SSS */}
-      <section className="bg-surface rounded-[28px] p-6 md:p-8">
-        <h2 className="font-display font-extrabold text-xl tracking-tight text-ink mb-1">
-          Sıkça Sorulan Sorular
-        </h2>
-        <p className="text-sm text-ink/45 mb-5">Aklına gelmeden önce buraya yazmaya çalıştık.</p>
-        <div className="flex flex-col gap-2">
-          <FaqItem
-            q="Panelde birden fazla hesap açarsam herkes her şeyi görür mü?"
-            a={
-              <>
-                Evet. Şu an hesaplar arasında bir ayrım yok — kayıt olan herkes tüm dökümanları,
-                ziyaretçileri ve istatistikleri görebilir. Panele kimi eklediğine dikkat et.
-              </>
-            }
-          />
-          <FaqItem
-            q={'Harita pini "kaç kere bakıldığını" mı, "kaç kişi baktığını" mı gösteriyor?'}
-            a={
-              <>
-                Kaç farklı kişi. Aynı e-posta kataloğu 5 kere açsa bile pin sadece 1 artar — tekrar
-                ziyaretler sayılmaz. Farklı iki e-posta aynı şehirdense ikisi ayrı sayılır.
-              </>
-            }
-          />
-          <FaqItem
-            q="Konum bilgisi neden bazen yanlış çıkabiliyor?"
-            a={
-              <>
-                Konum, ziyaretçinin IP adresinden tahmin ediliyor — %100 kesin değil. VPN veya kurumsal
-                proxy kullanan biri gerçek olmayan bir ülkede görünebilir; bu her IP tabanlı sistemin
-                ortak sınırıdır.
-              </>
-            }
-          />
-          <FaqItem
-            q="Bir dökümanı güncellersem (yeni PDF yüklersem) link değişir mi?"
-            a={
-              <>
-                Hayır. Aynı link, aynı adres kalır — daha önce paylaştığın bağlantı çalışmaya devam
-                eder. Eski versiyonun istatistikleri kaybolmaz, döküman sayfasındaki versiyon
-                seçiciyle bakabilirsin.
-              </>
-            }
-          />
-          <FaqItem
-            q="Linki elde eden biri e-posta girmeden PDF'i görebilir mi?"
-            a={
-              <>
-                Hayır. Link tek başına içeriği açmaz, ilk seferde e-posta istenir. Bu hem takip için
-                hem de içeriğin kontrolsüzce yayılmasını zorlaştırmak için var.
-              </>
-            }
-          />
-          <FaqItem
-            q="Toplu mail gönderdim ama Gmail'de Tanıtımlar sekmesine düştü, ne yapmalıyım?"
-            a={
-              <>
-                Gönderirken <strong className="text-ink">Sade görünüm</strong>&apos;ü işaretle — logo ve büyük buton
-                kalkınca mail kişisel bir mektuba benzer, Gmail&apos;in &quot;kampanya&quot; sınıflandırması daha az
-                tetiklenir (garanti değil). Alıcı tarafında en etkili çözüm: mail Tanıtımlar&apos;a
-                düştüğünde alıcının onu Gelen Kutusu&apos;na sürüklemesi — Gmail bunu öğrenip bir dahakine
-                doğrudan gelen kutusuna koyar.
-              </>
-            }
-          />
-          <FaqItem
-            q={'Mail\'e görsel eklerken "Geçersiz bilgi" hatası alıyorum.'}
-            a={
-              <>
-                İki olası neden var: format (yalnızca PNG, JPEG, WEBP, GIF — iPhone&apos;un varsayılan HEIC
-                formatı desteklenmiyor; Ayarlar → Kamera → Biçimler → &quot;En Uyumlu&quot; ile düzeltebilirsin)
-                veya boyut (en fazla ~2MB).
-              </>
-            }
-          />
-          <FaqItem
-            q="Kişiler listesindeki e-postalar nereden geliyor, ben mi eklemeliyim?"
-            a={
-              <>
-                Hiçbir şey eklemene gerek yok — biri e-posta kapısından geçtiği an otomatik olarak
-                &quot;Tanınmayan Müşteri&quot; grubuyla listeye düşer. İstersen onu Profil&apos;den özelleştirdiğin
-                diğer gruplara taşıyabilirsin.
-              </>
-            }
-          />
-          <FaqItem
-            q='"Canlı İzleyiciler" ne sıklıkla güncelleniyor?'
-            a={
-              <>
-                15 saniyede bir. Bir ziyaretçi son 60 saniye içinde sinyal göndermediyse (sayfayı
-                kapattı, sekmeyi değiştirdi) listeden düşer — &quot;canlı&quot; olması gerçekten şu an baktığı
-                anlamına gelir.
-              </>
-            }
-          />
-          <FaqItem
-            q="PDF'im çok büyük, yükleme uzun mu sürer?"
-            a={
-              <>
-                Hayır. Dosya (200MB&apos;a kadar) doğrudan depolamaya gider, sayfa önizlemeleri arka planda
-                hazırlanır — sen yükleme ekranında beklemezsin, birkaç saniyede panele dönersin.
-              </>
-            }
-          />
-          <FaqItem
-            q="Bir dökümanı sildim, geri alabilir miyim?"
-            a={
-              <>
-                Hayır, silme kalıcıdır — döküman ve tüm istatistikleri birlikte gider. Linki geçici
-                olarak kapatmak istiyorsan &quot;Pasif yap&quot; seçeneğini kullan, bu geri alınabilir.
-              </>
-            }
-          />
-          <FaqItem
-            q="Aynı kişi hem iş hem kişisel e-postasıyla girerse ayrı mı sayılır?"
-            a={
-              <>
-                Evet. Sistem kişiyi yalnızca e-postadan tanır, iki farklı e-posta iki farklı ziyaretçi
-                olarak görünür.
-              </>
-            }
-          />
-        </div>
-      </section>
     </div>
   );
 }
