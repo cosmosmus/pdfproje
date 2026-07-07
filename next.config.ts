@@ -32,6 +32,16 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "512mb",
     },
   },
+  // Eski maillerde /d/{slug} biçiminde link gitti; kalıcı olarak /doc'a yönlendir.
+  async redirects() {
+    return [
+      {
+        source: "/d/:slug",
+        destination: "/doc/:slug",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

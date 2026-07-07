@@ -80,7 +80,7 @@ export default function MailComposer({
   }
 
   const selectedDoc = documents.find((d) => d.id === linkDocId);
-  const docLink = selectedDoc ? `${baseUrl}/d/${selectedDoc.slug}` : null;
+  const docLink = selectedDoc ? `${baseUrl}/doc/${selectedDoc.slug}` : null;
 
   async function handleSend() {
     if (selected.size === 0) return alert("En az bir alıcı seçin.");
