@@ -50,13 +50,18 @@ export async function POST(request: NextRequest) {
 
   const adminUser = await prisma.adminUser.findUnique({
     where: { email: admin },
-    select: { companyName: true, contactEmail: true },
+    select: { companyName: true, contactEmail: true, logoStorageKey: true },
   });
   const companyName = adminUser?.companyName ?? "Vitrin";
   // Yanıtlar ve abonelik çıkışları gönderen kutusuna (MAIL_FROM) düşer;
   // ayrı bir reply-to koymuyoruz ki alıcı tarafında beklenmedik bir adres
   // görünmesin (kullanıcı isteği: info@... alıcıda görünmesin).
   const unsubscribeAddress = getMailFrom();
+  // Profildeki logo maillerde mutlak URL ile gösterilir (mail istemcisi
+  // uygulama sunucusundan çeker; /api/branding/logo halka açık).
+  const logoUrl = adminUser?.logoStorageKey
+    ? `${request.nextUrl.origin}/api/branding/logo`
+    : null;
 
   const escapedText = text
     .replace(/&/g, "&amp;")
@@ -66,36 +71,41 @@ export async function POST(request: NextRequest) {
     .map((line) => `<p style="margin:0 0 12px 0">${line || "&nbsp;"}</p>`)
     .join("");
 
+  const headerHtml = logoUrl
+    ? `<img src="${logoUrl}" alt="${escapeHtml(companyName)}" height="40" style="height:40px;max-width:200px;display:block;margin:0 auto" />`
+    : `<p style="margin:0;font-size:15px;font-weight:700;color:#20232b;letter-spacing:0.04em">${escapeHtml(companyName)}</p>`;
+
   const imageHtml = imageBase64
     ? `<div style="margin:24px 0"><img src="${imageBase64}" alt="" style="max-width:100%;border-radius:8px" /></div>`
     : "";
 
   const linkHtml = docLink
-    ? `<div style="margin:28px 0;text-align:center">
-        <a href="${escapeHtml(docLink)}" style="display:inline-block;background:#0ea99b;color:#fff;font-weight:600;font-size:14px;padding:14px 28px;border-radius:12px;text-decoration:none">
-          ${escapeHtml(docTitle ?? "Dökümanı Görüntüle")} →
+    ? `<div style="margin:32px 0;text-align:center">
+        <a href="${escapeHtml(docLink)}" style="display:inline-block;background:#20232b;color:#fff;font-weight:600;font-size:14px;padding:13px 32px;border-radius:9999px;text-decoration:none">
+          ${escapeHtml(docTitle ?? "View Document")}
         </a>
-        <p style="margin:10px 0 0;font-size:11px;color:#9ca3af">${escapeHtml(docLink)}</p>
       </div>`
     : "";
 
   const html = `<!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f4f6f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
-  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px">
+<body style="margin:0;padding:0;background:#f6f7f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:48px 20px">
     <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07)">
-        <tr><td style="padding:32px 40px 0">
-          <p style="margin:0 0 24px 0;font-size:13px;font-weight:700;color:#0ea99b;letter-spacing:0.1em;text-transform:uppercase">${escapeHtml(companyName)}</p>
+      <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%">
+        <tr><td align="center" style="padding:0 0 28px">
+          ${headerHtml}
+        </td></tr>
+        <tr><td style="background:#ffffff;border-radius:14px;padding:36px 40px">
           <div style="font-size:15px;line-height:1.7;color:#20232b">${escapedText}</div>
           ${imageHtml}
           ${linkHtml}
         </td></tr>
-        <tr><td style="padding:24px 40px 32px;border-top:1px solid #edf0ef;margin-top:24px">
-          <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.6">
-            Bu maili ${escapeHtml(companyName)} aracılığıyla aldınız.<br>
-            Almak istemiyorsanız <a href="mailto:${unsubscribeAddress}?subject=Abonelikten%20%C3%A7%C4%B1k" style="color:#6b7280">buraya tıklayın</a>.
+        <tr><td align="center" style="padding:24px 20px 0">
+          <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.7;text-align:center">
+            You received this email from ${escapeHtml(companyName)}.<br>
+            <a href="mailto:${unsubscribeAddress}?subject=Unsubscribe" style="color:#9ca3af;text-decoration:underline">Unsubscribe</a>
           </p>
         </td></tr>
       </table>
@@ -121,7 +131,7 @@ export async function POST(request: NextRequest) {
           html,
           fromName: companyName,
           headers: {
-            "List-Unsubscribe": `<mailto:${unsubscribeAddress}?subject=Abonelikten%20%C3%A7%C4%B1k>`,
+            "List-Unsubscribe": `<mailto:${unsubscribeAddress}?subject=Unsubscribe>`,
           },
         })
       )
