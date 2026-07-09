@@ -54,11 +54,18 @@ export async function POST(request: NextRequest) {
   // live geo service on every flush. An IP that was already located on an
   // earlier visit reuses that answer too: live services drift over time,
   // which used to put the same visitor in two different cities on the map.
+  // Yalnızca son 30 günün cevabı yeniden kullanılır — mobil operatör IP'leri
+  // el değiştirir ve eski/yanlış bir kayıt IP'ye sonsuza dek yapışmasın.
+  const REUSE_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
   const { country, city, latitude, longitude } =
     existingVisit ??
     (ip
       ? await prisma.visit.findFirst({
-          where: { ipAddress: ip, country: { not: null } },
+          where: {
+            ipAddress: ip,
+            country: { not: null },
+            startedAt: { gte: new Date(Date.now() - REUSE_WINDOW_MS) },
+          },
           orderBy: { startedAt: "desc" },
           select: { country: true, city: true, latitude: true, longitude: true },
         })
