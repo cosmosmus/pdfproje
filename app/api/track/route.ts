@@ -51,10 +51,19 @@ export async function POST(request: NextRequest) {
 
   // Geolocate once per visit (a viewer sends a new batch every ~7s while the
   // tab is open) — reuse what was already stored instead of re-querying the
-  // live geo service on every flush.
-  const { country, city, latitude, longitude } = existingVisit
-    ? existingVisit
-    : await lookupGeoLive(ip);
+  // live geo service on every flush. An IP that was already located on an
+  // earlier visit reuses that answer too: live services drift over time,
+  // which used to put the same visitor in two different cities on the map.
+  const { country, city, latitude, longitude } =
+    existingVisit ??
+    (ip
+      ? await prisma.visit.findFirst({
+          where: { ipAddress: ip, country: { not: null } },
+          orderBy: { startedAt: "desc" },
+          select: { country: true, city: true, latitude: true, longitude: true },
+        })
+      : null) ??
+    (await lookupGeoLive(ip));
 
   await prisma.visit.upsert({
     where: { id: visitId },
