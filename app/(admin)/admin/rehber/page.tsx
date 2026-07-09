@@ -151,12 +151,13 @@ export default async function GuidePage() {
     <div className="flex flex-col gap-4 md:gap-6">
       {/* Özet: bu sistem ne işe yarar */}
       <section className="hover-lift bg-ink text-surface rounded-[28px] p-6 md:p-8">
-        <p className="font-mono text-xs font-medium text-ember tracking-[0.14em] uppercase mb-3">Vitrin nedir</p>
+        <p className="font-mono text-xs font-medium text-ember tracking-[0.14em] uppercase mb-3">PDF Vitrini nedir</p>
         <h1 className="font-display font-extrabold text-2xl md:text-[1.75rem] tracking-tight mb-3 max-w-[600px] text-balance">
-          Kimin, hangi sayfaya, ne kadar süre ve nereden baktığını gör
+          PDF&apos;ini yükle; kimin, hangi sayfaya, ne kadar süre ve nereden
+          baktığını gör, analizlerle ürününü öne taşı
         </h1>
         <p className="text-sm text-surface/65 leading-relaxed max-w-[600px] mb-6">
-          Vitrin bir katalog paylaşım ve okuyucu takip paneli. Bir PDF yüklüyorsun, tek bir link
+          PDF Vitrini bir katalog paylaşım ve okuyucu takip paneli. Bir PDF yüklüyorsun, tek bir link
           üretiliyor; o linki açan herkesin e-postasını, hangi sayfada ne kadar durduğunu, tahmini
           nereden baktığını ve ne zaman geri döndüğünü panelden görüyorsun. Aşağıdaki altı durak
           bu sürecin tamamını, adım adım anlatıyor.
