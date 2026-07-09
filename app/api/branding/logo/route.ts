@@ -3,10 +3,12 @@ import { prisma } from "@/lib/db";
 import { readDocumentFile } from "@/lib/storage";
 
 export async function GET() {
-  // Birden fazla hesap varsa logosu gerçekten olan hesabı seç.
+  // Site geneli marka logosu: ilk kurulan (sahip) hesabın logosu esastır.
+  // updatedAt'e göre seçmek, başka bir hesap profilinde herhangi bir alanı
+  // güncellediğinde logonun el değiştirmesine yol açıyordu.
   const admin = await prisma.adminUser.findFirst({
     where: { logoStorageKey: { not: null } },
-    orderBy: { updatedAt: "desc" },
+    orderBy: { createdAt: "asc" },
     select: { logoStorageKey: true, logoContentType: true },
   });
 

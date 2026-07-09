@@ -7,7 +7,7 @@ export default function FaviconUploader({ hasFavicon }: { hasFavicon: boolean })
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(
-    hasFavicon ? "/api/branding/favicon" : null
+    hasFavicon ? "/api/admin/branding/favicon" : null
   );
   const [status, setStatus] = useState<"idle" | "uploading" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +30,7 @@ export default function FaviconUploader({ hasFavicon }: { hasFavicon: boolean })
     }
 
     setStatus("idle");
-    setPreview(`/api/branding/favicon?t=${Date.now()}`);
+    setPreview(`/api/admin/branding/favicon?t=${Date.now()}`);
     router.refresh();
   }
 

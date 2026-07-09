@@ -7,7 +7,7 @@ export default function LogoUploader({ hasLogo }: { hasLogo: boolean }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(
-    hasLogo ? "/api/branding/logo" : null
+    hasLogo ? "/api/admin/branding/logo" : null
   );
   const [status, setStatus] = useState<"idle" | "uploading" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +30,7 @@ export default function LogoUploader({ hasLogo }: { hasLogo: boolean }) {
     }
 
     setStatus("idle");
-    setPreview(`/api/branding/logo?t=${Date.now()}`);
+    setPreview(`/api/admin/branding/logo?t=${Date.now()}`);
     router.refresh();
   }
 

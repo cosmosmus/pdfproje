@@ -9,7 +9,7 @@ function Logo({ hasLogo }: { hasLogo: boolean }) {
       {hasLogo ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src="/api/branding/logo"
+          src="/api/admin/branding/logo"
           alt="Logo"
           className="h-8 w-auto max-w-[140px] object-contain"
         />

@@ -21,7 +21,9 @@ export async function GET() {
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type": admin.logoContentType,
-        "Cache-Control": "private, max-age=300",
+        // Panel her zaman güncel logoyu göstersin; yükleme sonrası bayat
+        // önizleme kalmasın diye önbelleğe alınmaz.
+        "Cache-Control": "private, no-store",
         "X-Content-Type-Options": "nosniff",
         "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
       },

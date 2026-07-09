@@ -3,10 +3,10 @@ import { prisma } from "@/lib/db";
 import { readDocumentFile } from "@/lib/storage";
 
 export async function GET(request: NextRequest) {
-  // Birden fazla hesap varsa favicon'u gerçekten olan hesabı seç.
+  // Site geneli favicon: ilk kurulan (sahip) hesabın favicon'u esastır.
   const admin = await prisma.adminUser.findFirst({
     where: { faviconStorageKey: { not: null } },
-    orderBy: { updatedAt: "desc" },
+    orderBy: { createdAt: "asc" },
     select: { faviconStorageKey: true, faviconContentType: true },
   });
 

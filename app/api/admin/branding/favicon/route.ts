@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
-import { saveDocumentFile } from "@/lib/storage";
+import { saveDocumentFile, readDocumentFile } from "@/lib/storage";
 
 const ALLOWED_TYPES = new Map([
   ["image/png", "png"],
@@ -11,6 +11,32 @@ const ALLOWED_TYPES = new Map([
 ]);
 
 const MAX_SIZE_BYTES = 1 * 1024 * 1024; // 1MB
+
+export async function GET() {
+  const email = await requireAdmin();
+  if (!email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const admin = await prisma.adminUser.findUnique({ where: { email } });
+  if (!admin?.faviconStorageKey || !admin.faviconContentType) {
+    return NextResponse.json({ error: "Favicon yok" }, { status: 404 });
+  }
+
+  try {
+    const buffer = await readDocumentFile(admin.faviconStorageKey);
+    return new NextResponse(new Uint8Array(buffer), {
+      headers: {
+        "Content-Type": admin.faviconContentType,
+        "Cache-Control": "private, no-store",
+        "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+      },
+    });
+  } catch {
+    return NextResponse.json({ error: "Favicon bulunamadı" }, { status: 404 });
+  }
+}
 
 export async function POST(request: NextRequest) {
   const email = await requireAdmin();
