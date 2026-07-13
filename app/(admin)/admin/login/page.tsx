@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IconLogin } from "../_components/icons";
 
@@ -64,12 +63,6 @@ export default function AdminLoginPage() {
             {loading ? "Giriş yapılıyor..." : "Giriş yap"}
           </button>
         </form>
-        <p className="text-sm text-ink/45 text-center mt-6">
-          Hesabın yok mu?{" "}
-          <Link href="/admin/register" className="font-semibold text-ink hover:text-signal transition-colors">
-            Kayıt ol
-          </Link>
-        </p>
       </div>
     </div>
   );

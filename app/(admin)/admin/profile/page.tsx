@@ -6,13 +6,20 @@ import LogoUploader from "./LogoUploader";
 import ContactForm from "./ContactForm";
 import GroupLabelsForm from "./GroupLabelsForm";
 import FaviconUploader from "./FaviconUploader";
+import LoginHistory from "./LoginHistory";
 import Breadcrumbs from "../_components/Breadcrumbs";
 
 export default async function AdminProfilePage() {
   const email = await requireAdmin();
   if (!email) redirect("/admin/login");
 
-  const admin = await prisma.adminUser.findUnique({ where: { email } });
+  const [admin, logins] = await Promise.all([
+    prisma.adminUser.findUnique({ where: { email } }),
+    prisma.adminLoginEvent.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    }),
+  ]);
 
   return (
     <div className="max-w-5xl">
@@ -52,6 +59,10 @@ export default async function AdminProfilePage() {
             }}
           />
         </div>
+      </div>
+
+      <div className="mt-4 md:mt-6">
+        <LoginHistory logins={logins} />
       </div>
     </div>
   );

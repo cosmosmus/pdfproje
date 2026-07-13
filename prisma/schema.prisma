@@ -33,6 +33,20 @@ model AdminUser {
   faviconContentType String?
 }
 
+/// Her başarılı yönetici girişi için bir satır — ne zaman, nereden, hangi cihazdan.
+model AdminLoginEvent {
+  id        String   @id @default(uuid())
+  /// Giriş anındaki e-posta (hesap e-postası sonradan değişebilir).
+  email     String
+  ipAddress String?
+  userAgent String?
+  country   String?
+  city      String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model Document {
   id               String            @id @default(uuid())
   slug             String            @unique

@@ -328,9 +328,8 @@ export default async function GuidePage() {
           özelleştirebilirsin.
         </p>
         <p>
-          Panelde birden fazla kişi çalışacaksa herkes kendi hesabını açabilir. Ama şunu bilerek: şu an
-          hesaplar arasında bir ayrım yok, <strong className="text-ink">kayıt olan herkes tüm dökümanları ve
-          istatistikleri görür</strong>. Küçük, birbirine güvenen bir ekip için tasarlandı.
+          Panel <strong className="text-ink">tek bir yönetici hesabıyla</strong> çalışır; yeni hesap
+          açılamaz. E-posta ve şifreni Profil sayfasından değiştirebilirsin.
         </p>
       </Section>
     </div>
