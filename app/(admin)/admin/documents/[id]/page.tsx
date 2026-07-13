@@ -4,6 +4,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import { aggregateCountryData } from "@/lib/country-data";
+import { formatDateTime, formatDate, istanbulYearMonth } from "@/lib/format-date";
 import dynamic from "next/dynamic";
 import CountryMapLoader from "../../_components/CountryMapLoader";
 
@@ -106,13 +107,13 @@ export default async function DocumentAnalyticsPage({
     };
   });
 
-  // Monthly trend: last 6 months including the current one.
-  const now = new Date();
+  // Monthly trend: last 6 months including the current one (İstanbul saatine göre).
+  const nowYm = istanbulYearMonth(new Date());
   const monthlyData = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    const d = new Date(nowYm.year, nowYm.month - (5 - i), 1);
     const monthVisits = visits.filter((v) => {
-      const vd = v.startedAt;
-      return vd.getFullYear() === d.getFullYear() && vd.getMonth() === d.getMonth();
+      const vd = istanbulYearMonth(v.startedAt);
+      return vd.year === d.getFullYear() && vd.month === d.getMonth();
     });
     const seconds = Math.round(
       monthVisits.reduce(
@@ -188,7 +189,7 @@ export default async function DocumentAnalyticsPage({
             <p className="text-xs text-ink/45">
               Son güncelleme:{" "}
               <span className="font-semibold text-ink">
-                {document.updatedAt.toLocaleString("tr-TR")}
+                {formatDateTime(document.updatedAt)}
               </span>{" "}
               · <span className="font-semibold text-ink">{document.pageCount} sayfa</span>
             </p>
@@ -240,7 +241,7 @@ export default async function DocumentAnalyticsPage({
           </div>
           <span className="text-xs text-ink/40">
             {selectedVersion.pageCount} sayfa ·{" "}
-            {selectedVersion.createdAt.toLocaleDateString("tr-TR")} ·{" "}
+            {formatDate(selectedVersion.createdAt)} ·{" "}
             {versionVisitCount} ziyaret — aşağıdaki sayfa bazlı grafikler bu versiyona aittir
           </span>
         </section>

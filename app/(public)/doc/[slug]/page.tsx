@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { gateCookieName, verifyGateToken } from "@/lib/auth";
 import { isS3Configured, presignDownloadUrl } from "@/lib/storage";
+import { formatDate } from "@/lib/format-date";
 import EmailGateForm from "./EmailGateForm";
 import PdfViewerLoader from "./PdfViewerLoader";
 
@@ -66,7 +67,7 @@ export default async function PublicDocumentPage({
       title={document.title}
       pageCount={document.pageCount}
       fileUrl={fileUrl}
-      lastUpdated={document.updatedAt.toLocaleDateString(locale === "tr" ? "tr-TR" : "en-GB")}
+      lastUpdated={formatDate(document.updatedAt, locale === "tr" ? "tr-TR" : "en-GB")}
       contact={admin}
       locale={locale}
     />

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import type { GroupLabels } from "@/lib/group-labels";
+import { formatDate } from "@/lib/format-date";
 
 export type ContactGroup =
   | "APP_MEMBER"
@@ -153,7 +154,7 @@ export default function ContactsTable({
 
                     {/* Tarih */}
                     <td className={`${cell} text-ink/40 text-xs font-mono whitespace-nowrap`}>
-                      {new Date(row.firstSeen).toLocaleDateString("tr-TR", {
+                      {formatDate(new Date(row.firstSeen), "tr-TR", {
                         day: "2-digit",
                         month: "short",
                         year: "numeric",

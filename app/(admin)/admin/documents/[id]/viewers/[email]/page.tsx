@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import { aggregateCountryData } from "@/lib/country-data";
 import { describeUserAgent } from "@/lib/user-agent";
+import { formatDateTime } from "@/lib/format-date";
 import CountryMapLoader from "../../../../_components/CountryMapLoader";
 import Breadcrumbs from "../../../../_components/Breadcrumbs";
 import SectionHeading from "../../../../_components/SectionHeading";
@@ -91,11 +92,11 @@ export default async function ViewerHistoryPage({
         <p className="text-xs text-ink/45">
           İlk görüntüleme:{" "}
           <span className="font-semibold text-ink">
-            {viewerSession.firstSeenAt.toLocaleString("tr-TR")}
+            {formatDateTime(viewerSession.firstSeenAt)}
           </span>{" "}
           · Son görüntüleme:{" "}
           <span className="font-semibold text-ink">
-            {viewerSession.lastSeenAt.toLocaleString("tr-TR")}
+            {formatDateTime(viewerSession.lastSeenAt)}
           </span>{" "}
           · Toplam ziyaret:{" "}
           <span className="font-bold text-signal-dim">{visits.length}</span>
@@ -146,7 +147,7 @@ export default async function ViewerHistoryPage({
                 return (
                   <tr key={visit.id} className="group">
                     <td className={`${cell} rounded-l-2xl font-mono text-xs text-ink/50 whitespace-nowrap`}>
-                      {visit.startedAt.toLocaleString("tr-TR")}
+                      {formatDateTime(visit.startedAt)}
                     </td>
                     <td className={`${cell} font-mono text-xs text-ink/50`}>v{visit.documentVersion}</td>
                     <td className={`${cell} font-mono text-xs text-ember`}>{formatDuration(visitMs / 1000)}</td>

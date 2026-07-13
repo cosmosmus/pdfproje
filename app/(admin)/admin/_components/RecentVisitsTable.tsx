@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { describeUserAgent } from "@/lib/user-agent";
+import { formatDateTime } from "@/lib/format-date";
 import { formatDuration } from "@/lib/format-duration";
 import { countryFlagUrl } from "@/lib/country-flag";
 import CountryFlagImg from "./CountryFlagImg";
@@ -42,7 +43,7 @@ export default function RecentVisitsTable({ visits, bare = false }: { visits: Vi
           {visits.map((v) => (
             <tr key={v.id} className="group">
               <td className={`${cell} rounded-l-2xl font-mono text-xs text-ink/50 whitespace-nowrap`}>
-                {v.startedAt.toLocaleString("tr-TR")}
+                {formatDateTime(v.startedAt)}
               </td>
               {showDocument && (
                 <td className={cell}>

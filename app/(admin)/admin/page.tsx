@@ -4,6 +4,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-session";
 import { prisma } from "@/lib/db";
 import { aggregateCountryData } from "@/lib/country-data";
+import { formatDate, istanbulYearMonth } from "@/lib/format-date";
 import dynamic from "next/dynamic";
 import StatsCards from "./_components/StatsCards";
 import CountryMapLoader from "./_components/CountryMapLoader";
@@ -78,13 +79,13 @@ export default async function AdminDashboardPage() {
     .sort((a, b) => b.seconds - a.seconds)
     .slice(0, 8);
 
-  // Monthly trend across all documents, last 6 months.
-  const now = new Date();
+  // Monthly trend across all documents, last 6 months (İstanbul saatine göre).
+  const nowYm = istanbulYearMonth(new Date());
   const monthlyData = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    const d = new Date(nowYm.year, nowYm.month - (5 - i), 1);
     const monthVisits = visits.filter((v) => {
-      const vd = v.startedAt;
-      return vd.getFullYear() === d.getFullYear() && vd.getMonth() === d.getMonth();
+      const vd = istanbulYearMonth(v.startedAt);
+      return vd.year === d.getFullYear() && vd.month === d.getMonth();
     });
     const seconds = Math.round(
       monthVisits.reduce(
@@ -185,7 +186,7 @@ export default async function AdminDashboardPage() {
                     <td className={`${cell} text-ink/60 font-mono text-xs whitespace-nowrap`}>{doc.pageCount}</td>
                     <td className={`${cell} text-ink/60 font-mono text-xs whitespace-nowrap`}>{doc._count.viewerSessions}</td>
                     <td className={`${cell} text-ink/50 font-mono text-xs whitespace-nowrap`}>
-                      {doc.updatedAt.toLocaleDateString("tr-TR")}
+                      {formatDate(doc.updatedAt)}
                     </td>
                     <td className={`${cell} whitespace-nowrap`}>
                       <div className="flex items-center gap-2">

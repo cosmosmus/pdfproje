@@ -1,4 +1,5 @@
 import { describeUserAgent } from "@/lib/user-agent";
+import { formatDateTime } from "@/lib/format-date";
 import { countryFlagUrl } from "@/lib/country-flag";
 import CountryFlagImg from "../_components/CountryFlagImg";
 
@@ -34,7 +35,7 @@ export default function LoginHistory({ logins }: { logins: LoginRow[] }) {
             {logins.map((l) => (
               <tr key={l.id} className="group">
                 <td className={`${cell} rounded-l-2xl font-mono text-xs text-ink/50 whitespace-nowrap`}>
-                  {l.createdAt.toLocaleString("tr-TR")}
+                  {formatDateTime(l.createdAt)}
                 </td>
                 <td className={`${cell} text-ink/60 whitespace-nowrap`} title={l.city ? "IP tabanlı tahmini konum" : undefined}>
                   <span className="inline-flex items-center gap-1.5">
